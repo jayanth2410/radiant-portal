@@ -24,12 +24,24 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="d-flex min-vh-100" style={{ backgroundColor: "#000", color: "#fff" }}>
+    <div
+      className="d-flex min-vh-100"
+      style={{ backgroundColor: "#000", color: "#fff" }}
+    >
       {/* Sidebar */}
       <aside
         className="d-flex flex-column justify-content-between p-3"
-        style={{ width: "250px", backgroundColor: "#111", borderRight: "1px solid #444" }}
+        style={{
+          width: "250px",
+          backgroundColor: "#111",
+          borderRight: "1px solid #444",
+          position: "fixed", // Fix the sidebar
+          top: 0,
+          bottom: 0,
+          left: 0,
+        }}
       >
+        {/* User Info */}
         <div>
           <div className="d-flex align-items-center mb-4">
             <div
@@ -47,41 +59,73 @@ const Dashboard = () => {
               <i className="bi bi-person"></i>
             </div>
             <div className="ms-3">
-              <h5 className="mb-0">Jayanth</h5>
+              <h5 className="mb-0">Username</h5>
               <small>Developer</small>
             </div>
           </div>
+
+          {/* Navigation Links */}
           <nav className="nav flex-column">
             <button
-              className={`nav-link text-white ${activeSection === "Home" ? "bg-dark rounded mb-2" : ""}`}
-              style={{ padding: "10px", transition: "background-color 0.1s ease", border: "none", background: "none" }}
+              className={`nav-link text-white ${
+                activeSection === "Home" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
               onClick={() => setActiveSection("Home")}
             >
               Home
             </button>
             <button
-              className={`nav-link text-white ${activeSection === "Profile" ? "bg-dark rounded mb-2" : ""}`}
-              style={{ padding: "10px", transition: "background-color 0.1s ease", border: "none", background: "none" }}
+              className={`nav-link text-white ${
+                activeSection === "Profile" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
               onClick={() => setActiveSection("Profile")}
             >
               Profile
             </button>
             <button
-              className={`nav-link text-white ${activeSection === "Certifications" ? "bg-dark rounded mb-2" : ""}`}
-              style={{ padding: "10px", transition: "background-color 0.1s ease", border: "none", background: "none" }}
+              className={`nav-link text-white ${
+                activeSection === "Certifications" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
               onClick={() => setActiveSection("Certifications")}
             >
               Certifications
             </button>
             <button
-              className={`nav-link text-white ${activeSection === "Projects" ? "bg-dark rounded mb-2" : ""}`}
-              style={{ padding: "10px", transition: "background-color 0.1s ease", border: "none", background: "none" }}
+              className={`nav-link text-white ${
+                activeSection === "Projects" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
               onClick={() => setActiveSection("Projects")}
             >
               Projects
             </button>
           </nav>
         </div>
+
+        {/* Logout */}
         <div>
           <a
             href="/"
@@ -93,10 +137,23 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-grow-1 p-4">
+      {/* Content Area */}
+      <div
+        className="container py-4 flex-grow-1"
+        style={{
+          marginLeft: "250px", // Offset the content to the right of the fixed sidebar
+          overflowY: "auto", // Enable scrolling for the content area
+          height: "100vh", // Ensure the content area takes the full viewport height
+        }}
+      >
+        {/* Main Content */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="text-white">Dashboard</h2>
+        </div>
+
+        {/* Add your dashboard content here */}
         {renderContent()}
-      </main>
+      </div>
     </div>
   );
 };

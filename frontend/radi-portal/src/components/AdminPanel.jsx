@@ -7,28 +7,36 @@ const AdminDashboard = () => {
   const [certificationFilter, setCertificationFilter] = useState("");
   const [skillFilter, setSkillFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeSection, setActiveSection] = useState("Dashboard");
 
-const users = Array.from({ length: 97 }, (_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-  email: `user${i + 1}@example.com`,
-  certifications: i % 2 === 0 ? ["AWS"] : ["GCP"], // Alternate between AWS and GCP
-  skills: i % 3 === 0 
-    ? ["Python", "JavaScript"] 
-    : i % 3 === 1 
-    ? ["Java", "SQL"] 
-    : ["Cloud", "DevOps"], // Rotate between different skill sets
-  experience: `${Math.floor(Math.random() * 10) + 1} years`, // Random experience between 1 and 10 years
-  certification: i % 4 === 0 ? "Certified" : "Pending", // Alternate between Certified and Pending
-}));
+  const users = Array.from({ length: 97 }, (_, i) => ({
+    id: i + 1,
+    name: `User ${i + 1}`,
+    email: `user${i + 1}@example.com`,
+    certifications: i % 2 === 0 ? ["AWS"] : ["GCP"], // Alternate between AWS and GCP
+    skills:
+      i % 3 === 0
+        ? ["Python", "JavaScript"]
+        : i % 3 === 1
+        ? ["Java", "SQL"]
+        : ["Cloud", "DevOps"], // Rotate between different skill sets
+    experience: `${Math.floor(Math.random() * 10) + 1} years`, // Random experience between 1 and 10 years
+    certification: i % 4 === 0 ? "Certified" : "Pending", // Alternate between Certified and Pending
+  }));
 
   const usersPerPage = 10;
 
   const filteredUsers = users.filter((user) => {
     return (
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (certificationFilter ? user.certifications.includes(certificationFilter) : true) &&
-      (skillFilter ? user.skills.some((skill) => skill.toLowerCase().includes(skillFilter.toLowerCase())) : true)
+      (certificationFilter
+        ? user.certifications.includes(certificationFilter)
+        : true) &&
+      (skillFilter
+        ? user.skills.some((skill) =>
+            skill.toLowerCase().includes(skillFilter.toLowerCase())
+          )
+        : true)
     );
   });
 
@@ -68,28 +76,115 @@ const users = Array.from({ length: 97 }, (_, i) => ({
   };
 
   return (
-    <div className="d-flex" style={{ minHeight: "100vh", backgroundColor: "#121212" }}>
+    <div
+      className="d-flex"
+      style={{ minHeight: "100vh", backgroundColor: "#121212" }}
+    >
       {/* Sidebar */}
+      <div
+        className="d-flex flex-column justify-content-between p-3"
+        style={{
+          width: "250px",
+          backgroundColor: "#111",
+          borderRight: "1px solid #444",
+          position: "fixed", // Fix the sidebar
+          top: 0,
+          bottom: 0,
+          left: 0,
+        }}
+      >
+        {/* Admin Info */}
+        <div>
+          <div className="d-flex align-items-center mb-4">
+            <div
+              className="rounded-circle"
+              style={{
+                width: "48px",
+                height: "48px",
+                backgroundColor: "#7c3aed",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                color: "#fff",
+              }}
+            >
+              <i className="bi bi-person"></i>
+            </div>
+            <div className="ms-3 text-white">
+              <h5 className="mb-0">username</h5>
+              <small>Admin</small>
+            </div>
+          </div>
 
-      
-      <div className="bg-dark text-white p-3" style={{ width: "250px" }}>
-        <h4 className="mb-4">Admin</h4>
-        <ul className="nav flex-column">
-          <li className="nav-item mb-2">
-            <a href="#" className="nav-link text-white">Dashboard</a>
-          </li>
-          <li className="nav-item mb-2">
-            <a href="#" className="nav-link text-white">Users</a>
-          </li>
-          <li className="nav-item mb-2">
-            <a href="#" className="nav-link text-white">Settings</a>
-          </li>
-        </ul>
+          {/* Navigation Links */}
+          <nav className="nav flex-column">
+            <button
+              className={`nav-link text-white ${
+                activeSection === "Dashboard" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
+              onClick={() => setActiveSection("Dashboard")}
+            >
+              Dashboard
+            </button>
+            <button
+              className={`nav-link text-white ${
+                activeSection === "Users" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
+              onClick={() => setActiveSection("Users")}
+            >
+              Users
+            </button>
+            <button
+              className={`nav-link text-white ${
+                activeSection === "Settings" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
+              onClick={() => setActiveSection("Settings")}
+            >
+              Settings
+            </button>
+          </nav>
+        </div>
+
+        {/* Logout */}
+        <div>
+          <a
+            href="/"
+            className="text-light d-flex align-items-center"
+            style={{ textDecoration: "none" }}
+          >
+            <i className="bi bi-box-arrow-right me-2"></i> Logout
+          </a>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container py-4 flex-grow-1">
-        {/* Top Section */}
+      {/* Content Area */}
+      <div
+        className="container py-4 flex-grow-1"
+        style={{
+          marginLeft: "250px", // Offset the content to the right of the fixed sidebar
+          overflowY: "auto", // Enable scrolling for the content area
+          height: "100vh", // Ensure the content area takes the full viewport height
+        }}
+      >
+        {/* Main Content */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="text-white">Admin Panel</h2>
           <button className="btn btn-success" onClick={handleExcelDownload}>
@@ -159,7 +254,6 @@ const users = Array.from({ length: 97 }, (_, i) => ({
                 </tr>
               </thead>
               <tbody>
-
                 {currentUsers.length > 0 ? (
                   currentUsers.map((user) => (
                     <tr key={user.id}>
@@ -177,7 +271,9 @@ const users = Array.from({ length: 97 }, (_, i) => ({
                       {/* Certifications */}
                       <td>
                         {user.certifications.map((cert, index) => (
-                          <span key={index} className="badge bg-primary me-1">{cert}</span>
+                          <span key={index} className="badge bg-primary me-1">
+                            {cert}
+                          </span>
                         ))}
                       </td>
 
@@ -187,9 +283,11 @@ const users = Array.from({ length: 97 }, (_, i) => ({
                           <span
                             key={index}
                             className={`badge me-1 ${
-                              skill.toLowerCase().includes("python") ? "bg-purple" :
-                              skill.toLowerCase().includes("javascript") ? "bg-warning text-dark" :
-                              "bg-secondary"
+                              skill.toLowerCase().includes("python")
+                                ? "bg-purple"
+                                : skill.toLowerCase().includes("javascript")
+                                ? "bg-warning text-dark"
+                                : "bg-secondary"
                             }`}
                           >
                             {skill}
@@ -213,7 +311,9 @@ const users = Array.from({ length: 97 }, (_, i) => ({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center">No users found</td>
+                    <td colSpan="5" className="text-center">
+                      No users found
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -225,7 +325,9 @@ const users = Array.from({ length: 97 }, (_, i) => ({
             <div>
               {filteredUsers.length > 0 && (
                 <small>
-                  Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} entries
+                  Showing {indexOfFirstUser + 1} to{" "}
+                  {Math.min(indexOfLastUser, filteredUsers.length)} of{" "}
+                  {filteredUsers.length} entries
                 </small>
               )}
             </div>
