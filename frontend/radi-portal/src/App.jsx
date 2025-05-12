@@ -5,6 +5,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import Login from './components/Login.jsx';
 import Dashboard from './components/Dashboard.jsx';
+import AdminPanel from './components/AdminPanel.jsx';
 
 function App() {
   const [count, setCount] = useState(0);
@@ -15,9 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<h1>Profile Page</h1>} />
-          <Route path="/certifications" element={<h1>Certifications Page</h1>} />
-          <Route path="/projects" element={<h1>Projects Page</h1>} />
+          <Route path="/admin" element={<AdminPanel />} />
         </Routes>
       </Router>
     </>

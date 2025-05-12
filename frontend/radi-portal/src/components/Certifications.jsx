@@ -60,47 +60,99 @@ const Certification = () => {
     <div className="mb-5">
       <h2>Certifications</h2>
 
+      {/* No Certifications Placeholder */}
+      {certifications.length === 0 && !showAddCertification && (
+        <div
+          className="d-flex flex-column align-items-center justify-content-center"
+          style={{
+            height: "300px",
+            backgroundColor: "#333",
+            borderRadius: "8px",
+            color: "#fff",
+          }}
+        >
+          <i
+            className="bi bi-file-earmark-text"
+            style={{ fontSize: "3rem", color: "#7c3aed" }}
+          ></i>
+          <p className="mt-3">No certifications added yet.</p>
+        </div>
+      )}
+
       {/* List of Certifications */}
       {certifications.map((cert, index) => (
         <div
           key={index}
-          className="card bg-dark text-white p-3 mb-2 position-relative"
+          className="card bg-dark text-white p-3 mb-3 d-flex flex-row align-items-center"
+          style={{ borderRadius: "8px" }}
         >
-          <button
-            type="button"
-            className="btn-close btn-close-white position-absolute top-0 end-0 m-2"
-            aria-label="Close"
-            onClick={() => handleDeleteCertification(cert.title)}
-          ></button>
-          <h3>{cert.title}</h3>
+          {/* Image Section */}
           {cert.image && (
             <img
               src={cert.image}
               alt={cert.title}
-              style={{ maxWidth: "100px", maxHeight: "100px" }}
-              className="mb-2"
+              style={{
+                width: "100px",
+                height: "100px",
+                objectFit: "cover",
+                borderRadius: "8px",
+                marginRight: "1rem",
+              }}
             />
           )}
-          <div>
-            {cert.skills.map((skill, index) => (
-              <span key={index} className="badge bg-primary me-2">
-                {skill}
-              </span>
-            ))}
+
+          {/* Content Section */}
+          <div className="flex-grow-1">
+            <h3 className="mb-2">{cert.title}</h3>
+            <div className="d-flex flex-wrap">
+              {cert.skills.map((skill, index) => (
+                <span
+                  key={index}
+                  className="badge bg-primary me-2 mb-2"
+                  style={{ fontSize: "0.9rem" }}
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
           </div>
-          <button
-            className="btn btn-sm btn-danger position-absolute bottom-0 end-0 m-2"
-            onClick={() => handleEditCertification(index)}
-            style={{ width: "7rem" }}
-          >
-            Edit
-          </button>
+
+          {/* Edit/Delete Buttons */}
+          <div className="d-flex flex-column align-items-end">
+            <button
+              className="btn btn-sm btn-danger mb-2"
+              onClick={() => handleDeleteCertification(cert.title)}
+              style={{ width: "7rem" }}
+            >
+              Delete
+            </button>
+            <button
+              className="btn btn-sm btn-warning"
+              onClick={() => handleEditCertification(index)}
+              style={{ width: "7rem" }}
+            >
+              Edit
+            </button>
+          </div>
         </div>
       ))}
 
+      {/* Add Certification Button */}
+      {!showAddCertification && (
+        <div className="text-center mt-4">
+          <button
+            className="btn"
+            style={{ backgroundColor: "#7c3aed", color: "#fff" }}
+            onClick={() => setShowAddCertification(true)}
+          >
+            + Add Certification
+          </button>
+        </div>
+      )}
+
       {/* Add Certification Form */}
       {showAddCertification && (
-        <div className="mb-3">
+        <div className="bg-dark text-white p-4" style={{ borderRadius: "0.5rem" }}>
           <h2 className="text-center">Add Certification</h2>
           <div className="mb-2">
             <label htmlFor="certificationTitle" className="form-label">
@@ -159,13 +211,18 @@ const Certification = () => {
             {newCertification.skills.map((skill, index) => (
               <span
                 key={index}
-                className="badge bg-dark d-flex align-items-center"
-                style={{ padding: "0.5rem 1rem", borderRadius: "1rem" }}
+                className="badge d-flex align-items-center"
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "1rem",
+                  background: "#A4A5A1",
+                  color: "black",
+                }}
               >
                 {skill}
                 <button
                   type="button"
-                  className="btn-close btn-close-white ms-2"
+                  className="btn-close btn-close-dark ms-2"
                   style={{ fontSize: "0.8rem" }}
                   aria-label="Remove"
                   onClick={() => handleRemoveSkill(index)}
@@ -188,15 +245,6 @@ const Certification = () => {
             Cancel
           </button>
         </div>
-      )}
-      {!showAddCertification && (
-        <button
-          className="btn mt-2 mb-3"
-          style={{ backgroundColor: "#7c3aed", color: "#fff" }}
-          onClick={() => setShowAddCertification(true)}
-        >
-          + Add Certification
-        </button>
       )}
     </div>
   );

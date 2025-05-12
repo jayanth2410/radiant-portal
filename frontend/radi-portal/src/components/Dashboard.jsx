@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import Profile from "./Profile";
 import "bootstrap/dist/css/bootstrap.min.css";
+import Certification from "./Certifications";
+import Projects from "./Projects";
+import Home from "./HomePage";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Home");
@@ -8,13 +11,13 @@ const Dashboard = () => {
   const renderContent = () => {
     switch (activeSection) {
       case "Home":
-        return <h2>Welcome back, Sri! Here's what's happening with your projects today.</h2>;
+        return <Home />;
       case "Profile":
         return <Profile />;
       case "Certifications":
-        return <h2>Certifications Section: View and manage your certifications.</h2>;
+        return <Certification />;
       case "Projects":
-        return <h2>Projects Section: Track and manage your projects here.</h2>;
+        return <Projects />;
       default:
         return <h2>Welcome back, Sri!</h2>;
     }
@@ -44,7 +47,7 @@ const Dashboard = () => {
               <i className="bi bi-person"></i>
             </div>
             <div className="ms-3">
-              <h5 className="mb-0">Sri</h5>
+              <h5 className="mb-0">Jayanth</h5>
               <small>Developer</small>
             </div>
           </div>
@@ -68,20 +71,20 @@ const Dashboard = () => {
               style={{ padding: "10px", transition: "background-color 0.1s ease", border: "none", background: "none" }}
               onClick={() => setActiveSection("Certifications")}
             >
-              New Courses
+              Certifications
             </button>
             <button
               className={`nav-link text-white ${activeSection === "Projects" ? "bg-dark rounded mb-2" : ""}`}
               style={{ padding: "10px", transition: "background-color 0.1s ease", border: "none", background: "none" }}
               onClick={() => setActiveSection("Projects")}
             >
-              Projects Allocated
+              Projects
             </button>
           </nav>
         </div>
         <div>
           <a
-            href="#logout"
+            href="/"
             className="text-light d-flex align-items-center"
             style={{ textDecoration: "none" }}
           >
