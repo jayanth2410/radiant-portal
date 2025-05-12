@@ -1,12 +1,71 @@
 import React, { useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 import "./Login.css";
-import microsoft_icon from '../assets/microsoft_icon.png';
+import microsoft_icon from "../assets/microsoft_icon.png";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true); // Track which tab (Login/Signup) is active
+  const navigate = useNavigate();
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+
+    const fullName = e.target.fullName.value;
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, email, password }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Sign up successful! Redirecting to login...");
+        setTimeout(() => setIsLogin(true), 2000); // Redirect to login tab after 2 seconds
+      } else {
+        toast.error(data.message);
+      }
+    } catch (err) {
+      console.error("Signup error:", err);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Prevent form reload
+
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Login successful! Redirecting to dashboard...");
+        localStorage.setItem("token", data.token); // Store JWT
+        navigate("/dashboard"); // Redirect to the home page
+      } else {
+        toast.error(data.message);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
 
   return (
     <div className="login-container">
+      <ToastContainer position="top-center" autoClose={3000} />
       <div className="login-box">
         <div className="login-icon">
           <svg
@@ -41,14 +100,24 @@ export default function LoginPage() {
         </div>
 
         {isLogin ? (
-          <form className="form-fields">
+          <form className="form-fields" onSubmit={handleLogin}>
             <div>
               <label>Email address</label>
-              <input type="email" placeholder="Enter your email" required/>
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                required
+              />
             </div>
             <div>
               <label>Password</label>
-              <input type="password" placeholder="Enter your password" required/>
+              <input
+                type="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+              />
             </div>
             <div className="options">
               <label>
@@ -59,22 +128,41 @@ export default function LoginPage() {
             <button className="sign-in-btn">Sign in</button>
           </form>
         ) : (
-          <form className="form-fields">
+          <form className="form-fields" onSubmit={handleSignup}>
             <div>
               <label>Full Name</label>
-              <input type="text" placeholder="Enter your full name" required/>
+              <input
+                type="text"
+                name="fullName"
+                placeholder="Enter your full name"
+                required
+              />
             </div>
             <div>
               <label>Email address</label>
-              <input type="email" placeholder="Enter your email" required/>
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                required
+              />
             </div>
             <div>
               <label>Password</label>
-              <input type="password" placeholder="Enter your password" required/>
+              <input
+                type="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+              />
             </div>
             <div>
               <label>Confirm Password</label>
-              <input type="password" placeholder="Confirm your password" required/>
+              <input
+                type="password"
+                placeholder="Confirm your password"
+                required
+              />
             </div>
             <button className="sign-in-btn">Sign up</button>
           </form>

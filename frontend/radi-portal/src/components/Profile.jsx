@@ -10,6 +10,7 @@ const Profile = () => {
     phone: "",
     address: "",
     yearsOfExperience: "",
+    role: "", // New field added
   });
 
   const [editField, setEditField] = useState(null);
@@ -96,6 +97,8 @@ const Profile = () => {
                   ? "Date of Birth"
                   : key === "yearsOfExperience"
                   ? "Years of Experience"
+                  : key === "role"
+                  ? "Role"
                   : key}
               </label>
               {editField === key ? (
@@ -120,7 +123,7 @@ const Profile = () => {
                     )}
                   </span>
                   <FaEdit
-                    style={{ cursor: "pointer" }}
+                    style={{ cursor: "pointer"}}
                     onClick={() => setEditField(key)}
                   />
                 </div>
