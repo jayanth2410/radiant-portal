@@ -19,7 +19,7 @@ const Dashboard = () => {
       case "Projects":
         return <Projects />;
       default:
-        return <h2>Welcome back, Sri!</h2>;
+        return <h2>Welcome back, username!</h2>;
     }
   };
 
@@ -121,6 +121,20 @@ const Dashboard = () => {
               onClick={() => setActiveSection("Projects")}
             >
               Projects
+            </button>
+            <button
+              className={`nav-link text-white ${
+                activeSection === "Allocations" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
+              onClick={() => setActiveSection("Allocations")}
+            >
+              Allocations
             </button>
           </nav>
         </div>

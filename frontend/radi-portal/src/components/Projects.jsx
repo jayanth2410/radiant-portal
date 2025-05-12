@@ -74,6 +74,18 @@ const Projects = () => {
   return (
     <div className="mb-5">
       <h2>Projects</h2>
+      {/* Add Project Button */}
+      {!showAddProject && (
+        <div className="text-center mt-4" style={{ marginBottom: "2rem" }}>
+          <button
+            className="btn"
+            style={{ backgroundColor: "#7c3aed", color: "#fff" }}
+            onClick={() => setShowAddProject(true)}
+          >
+            + Add Project
+          </button>
+        </div>
+      )}
 
       {/* No Projects Placeholder */}
       {projects.length === 0 && !showAddProject && (
@@ -94,75 +106,12 @@ const Projects = () => {
         </div>
       )}
 
-      {/* List of Projects */}
-      {projects.map((proj, index) => (
-        <div
-          key={index}
-          className="card bg-dark text-white p-3 mb-3 d-flex flex-row align-items-center"
-          style={{ borderRadius: "8px" }}
-        >
-          {/* Content Section */}
-          <div className="flex-grow-1">
-            <h3 className="mb-2">{proj.title}</h3>
-            <p className="mb-1" style={{ fontSize: "0.9rem", color: "#b5b5b5" }}>
-              <i className="bi bi-calendar3" style={{ color: "#fff" }}></i>{" "}
-              {`${proj.startDate} - ${proj.endDate}`}
-            </p>
-            <p className="mb-1" style={{ fontSize: "0.9rem", color: "#d1d1d1" }}>
-              Role: {proj.role || "N/A"}
-            </p>
-            <p className="mb-2" style={{ fontSize: "0.9rem", color: "#d1d1d1" }}>
-              {proj.description}
-            </p>
-            <div className="d-flex flex-wrap gap-2">
-              {proj.techUsed.map((tech, index) => (
-                <span
-                  key={index}
-                  className="badge bg-primary"
-                  style={{ fontSize: "0.9rem" }}
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Edit/Delete Buttons */}
-          <div className="d-flex flex-column align-items-end">
-            <button
-              className="btn btn-sm btn-danger mb-2"
-              onClick={() => handleDeleteProject(proj.title)}
-              style={{ width: "7rem" }}
-            >
-              Delete
-            </button>
-            <button
-              className="btn btn-sm btn-warning"
-              onClick={() => handleEditProject(index)}
-              style={{ width: "7rem" }}
-            >
-              Edit
-            </button>
-          </div>
-        </div>
-      ))}
-
-      {/* Add Project Button */}
-      {!showAddProject && (
-        <div className="text-center mt-4">
-          <button
-            className="btn"
-            style={{ backgroundColor: "#7c3aed", color: "#fff" }}
-            onClick={() => setShowAddProject(true)}
-          >
-            + Add Project
-          </button>
-        </div>
-      )}
-
       {/* Add Project Form */}
       {showAddProject && (
-        <div className="bg-dark text-white p-4" style={{ borderRadius: "0.5rem" }}>
+        <div
+          className="bg-dark text-white p-4"
+          style={{ borderRadius: "0.5rem", marginBottom: "2rem" }}
+        >
           <h2 className="text-center">Add Project</h2>
           <div className="mb-2">
             <label htmlFor="projectTitle" className="form-label">
@@ -291,6 +240,67 @@ const Projects = () => {
           </button>
         </div>
       )}
+      {/* List of Projects */}
+      {projects.map((proj, index) => (
+        <div
+          key={index}
+          className="card bg-dark text-white p-3 mb-3 d-flex flex-row align-items-center"
+          style={{ borderRadius: "8px" }}
+        >
+          {/* Content Section */}
+          <div className="flex-grow-1">
+            <h3 className="mb-2">{proj.title}</h3>
+            <p
+              className="mb-1"
+              style={{ fontSize: "0.9rem", color: "#b5b5b5" }}
+            >
+              <i className="bi bi-calendar3" style={{ color: "#fff" }}></i>{" "}
+              {`${proj.startDate} - ${proj.endDate}`}
+            </p>
+            <p
+              className="mb-1"
+              style={{ fontSize: "0.9rem", color: "#d1d1d1" }}
+            >
+              Role: {proj.role || "N/A"}
+            </p>
+            <p
+              className="mb-2"
+              style={{ fontSize: "0.9rem", color: "#d1d1d1" }}
+            >
+              {proj.description}
+            </p>
+            <div className="d-flex flex-wrap gap-2">
+              {proj.techUsed.map((tech, index) => (
+                <span
+                  key={index}
+                  className="badge bg-primary"
+                  style={{ fontSize: "0.9rem" }}
+                >
+                  {tech}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Edit/Delete Buttons */}
+          <div className="d-flex flex-column align-items-end">
+            <button
+              className="btn btn-sm btn-danger mb-2"
+              onClick={() => handleDeleteProject(proj.title)}
+              style={{ width: "7rem" }}
+            >
+              Delete
+            </button>
+            <button
+              className="btn btn-sm btn-warning"
+              onClick={() => handleEditProject(index)}
+              style={{ width: "7rem" }}
+            >
+              Edit
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

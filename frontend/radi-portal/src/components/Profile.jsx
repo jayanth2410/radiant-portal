@@ -9,9 +9,10 @@ const Profile = () => {
     dob: "",
     phone: "",
     address: "",
+    yearsOfExperience: "",
   });
 
-  const [editField, setEditField] = useState(null); // Tracks which field is being edited
+  const [editField, setEditField] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,11 +32,11 @@ const Profile = () => {
 
   const handleSaveProfile = () => {
     alert("Profile saved successfully!");
-    setEditField(null); // Exit edit mode for all fields
+    setEditField(null);
   };
 
   return (
-    <div className="container py-4">
+    <div className="mb-5">
       <h2 className="mb-4">Profile</h2>
 
       {/* Profile Picture */}
@@ -43,8 +44,8 @@ const Profile = () => {
         <div
           className="rounded-circle mb-3"
           style={{
-            width: "120px",
-            height: "120px",
+            width: "100px",
+            height: "100px",
             backgroundColor: "#333",
             overflow: "hidden",
             display: "inline-block",
@@ -64,7 +65,7 @@ const Profile = () => {
                 alignItems: "center",
                 height: "100%",
                 color: "#fff",
-                fontSize: "1rem",
+                fontSize: "0.9rem",
               }}
             >
               Not Updated
@@ -72,7 +73,7 @@ const Profile = () => {
           )}
         </div>
         <div>
-          <label className="btn btn-primary">
+          <label className="btn btn-primary btn-sm">
             Upload Picture
             <input
               type="file"
@@ -87,11 +88,15 @@ const Profile = () => {
       {/* Personal Information Form */}
       <div className="card bg-dark text-white p-4">
         {Object.keys(profile)
-          .filter((key) => key !== "profilePicture") // Exclude profilePicture from editable fields
+          .filter((key) => key !== "profilePicture")
           .map((key) => (
             <div className="mb-3 position-relative" key={key}>
               <label htmlFor={key} className="form-label text-capitalize">
-                {key === "dob" ? "Date of Birth" : key}
+                {key === "dob"
+                  ? "Date of Birth"
+                  : key === "yearsOfExperience"
+                  ? "Years of Experience"
+                  : key}
               </label>
               {editField === key ? (
                 <input
@@ -101,7 +106,7 @@ const Profile = () => {
                   className="form-control bg-dark text-white"
                   value={profile[key]}
                   onChange={handleInputChange}
-                  onBlur={() => setEditField(null)} // Exit edit mode on blur
+                  onBlur={() => setEditField(null)}
                   autoFocus
                 />
               ) : (

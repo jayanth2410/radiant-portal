@@ -15,8 +15,8 @@ import {
 const HomePage = () => {
   const activity = ["activity1", "activity2", "activity3"];
   return (
-    <div className="flex-grow-1 p-4">
-      <h3>Welcome back, Jayanth</h3>
+    <div className="flex-grow-1 mb-5">
+      <h3>Welcome back, username</h3>
       <p className="text-info">
         Here's what's happening with your projects today.
       </p>
