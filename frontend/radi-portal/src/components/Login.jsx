@@ -54,7 +54,8 @@ export default function LoginPage() {
       toast.success("Login successful! Redirecting...");
       localStorage.setItem("token", data.token); // Store the token in localStorage
       console.log("token: " + localStorage.getItem("token"));
-      
+      console.log(data.user.category)
+
       // Redirect based on the user's category
       if (data.user.category === "admin") {
         navigate("/admin"); // Redirect to admin dashboard
