@@ -4,13 +4,12 @@ export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   const fetchUserData = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      localStorage.removeItem("token");
-      setLoading(false); // Stop loading if no token is found
+      setLoading(false);
       return;
     }
 
@@ -24,20 +23,20 @@ export const UserProvider = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data); // Set the user data in state
+        setUser(data); // Set the user data
       } else {
-        console.error("Failed to fetch user data.");
-        localStorage.removeItem("token");
+        setUser(null); // Clear the user state if the token is invalid
       }
     } catch (err) {
       console.error("Error fetching user data:", err);
+      setUser(null);
     } finally {
-      setLoading(false); // Stop loading after the fetch is complete
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUserData(); // Fetch user data on app load
+    fetchUserData();
   }, []);
 
   return (

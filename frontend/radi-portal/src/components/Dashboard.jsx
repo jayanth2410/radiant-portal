@@ -9,7 +9,6 @@ import { UserContext } from "./UserContext";
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Home");
   const { user, loading } = useContext(UserContext); // Get loading state from UserContext
-  const [hasRefreshed, setHasRefreshed] = useState(false); // Track if the page has been refreshed
 
   // Show loading screen while user data is being fetched
   if (loading) {
@@ -19,26 +18,6 @@ const Dashboard = () => {
         style={{ backgroundColor: "#000", color: "#fff" }}
       >
         <h2>Loading...</h2>
-      </div>
-    );
-  }
-
-  // Handle the case where user is null
-  if (!user) {
-    if (!hasRefreshed) {
-      // Refresh the page once
-      setHasRefreshed(true);
-      window.location.reload();
-      return null; // Prevent rendering anything during the refresh
-    }
-
-    // If user is still null after refresh, show the "User not found" message
-    return (
-      <div
-        className="d-flex justify-content-center align-items-center min-vh-100"
-        style={{ backgroundColor: "#000", color: "#fff" }}
-      >
-        <h2>User not found. Please log in again.</h2>
       </div>
     );
   }
@@ -95,7 +74,7 @@ const Dashboard = () => {
             </div>
             <div className="ms-3">
               <h5 className="mb-0">{user.fullName}</h5>
-              <small>Developer</small>
+              <small>{user.role}</small>
             </div>
           </div>
 
