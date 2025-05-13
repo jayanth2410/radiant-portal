@@ -7,3 +7,4 @@ input:focus::placeholder {
   color: #ccc; /* Light gray placeholder for visibility */
   opacity: 1; /* Ensure the placeholder is fully visible */
 }
+
