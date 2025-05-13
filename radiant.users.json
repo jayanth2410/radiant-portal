@@ -1,0 +1,30 @@
+[{
+  "_id": {
+    "$oid": "6821e879ae88f70d6faece85"
+  },
+  "fullName": "Jayanth M",
+  "email": "jayanth24102003@gmail.com",
+  "password": "$2b$10$iAEPZF5Q2zuZ2gFM8xjEp.qlrB9I/d.YXXd.kMENjsn6.2TNPXJZm",
+  "__v": 0,
+  "category": "user"
+},
+{
+  "_id": {
+    "$oid": "6821eb40656c3f0536db165f"
+  },
+  "fullName": "Srivathsala R",
+  "email": "srivathsala.cb21@bitsathy.ac.in",
+  "password": "$2b$10$yX37nCqfFMNfTcFW1XDD6eYJUV7mC47u8Im/6O/4RcQ2nTy377bam",
+  "__v": 0,
+  "category": "user"
+},
+{
+  "_id": {
+    "$oid": "6823299a7b3eda76355870c7"
+  },
+  "fullName": "admin",
+  "email": "admin@gmail.com",
+  "password": "$2b$10$NCKYYnq3A0AZB51IRCe0t./Ijblxh7cYbpc20dMuni9PikZ5OwvHq",
+  "__v": 0,
+  "category": "admin"
+}]
