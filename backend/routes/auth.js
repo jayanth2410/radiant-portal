@@ -2,7 +2,8 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-
+const jwtSecret = "myHardcodedSecretKey"; // Replace with your secret key
+const verifyToken = require("../middleware/verifyToken");
 const router = express.Router();
 
 // Signup Route
@@ -10,19 +11,20 @@ router.post("/signup", async (req, res) => {
   const { fullName, email, password } = req.body;
 
   try {
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
-    const newUser = new User({ fullName, email, password });
-    await newUser.save();
+    const user = new User({
+      fullName,
+      email,
+      password: hashedPassword,
+      category: "user", // Default to "user"
+    });
 
-    res.status(201).json({ message: "User created successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    await user.save();
+    res.status(201).json({ message: "User created successfully!" });
+  } catch (error) {
+    console.error("Error during signup:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -31,19 +33,30 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // Validate request body
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required." });
+    }
+
+    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
+    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
-    const token = jwt.sign({ id: user._id }, "your_jwt_secret", {
+    // Generate JWT token
+    const token = jwt.sign({ id: user._id }, jwtSecret, {
       expiresIn: "1h",
-    }); // Ensure the secret matches
+    });
+
     res.status(200).json({
       message: "Login successful",
       token,
@@ -51,57 +64,117 @@ router.post("/login", async (req, res) => {
         _id: user._id,
         fullName: user.fullName,
         email: user.email,
-        category: user.category, // Include category
+        category: user.category,
       },
     });
   } catch (err) {
+    console.error("Error during login:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
-
-// Middleware to verify JWT
-
-const verifyToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided." });
-  }
-
-  const token = authHeader.split(" ")[1]; // Extract the token after "Bearer"
-
-  if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided." });
-  }
-
-  try {
-    const decoded = jwt.verify(token, "your_jwt_secret"); // Ensure the secret matches the one used to sign the token
-    console.log("Decoded Token:", decoded); // Log the decoded token
-    req.user = decoded; // Attach the decoded user info to the request
-    next();
-  } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Token expired." });
-    }
-    res.status(400).json({ message: "Invalid token." });
-  }
-};
 
 // Fetch User Data Route
 router.get("/me", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password"); // Exclude password
+    const user = await User.findById(req.user.id);
     if (!user) {
-      console.error("User not found for ID:", req.user.id); // Log the issue
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json(user);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Error fetching user data:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
+
+// Create Task Route
+router.post("/admin/create-task", verifyToken, async (req, res) => {
+  const { title, description, deadline, assignedTo, status } = req.body;
+
+  try {
+    const admin = await User.findById(req.user.id);
+    if (!admin || admin.category !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Only admins can create tasks." });
+    }
+
+    const task = { title, description, deadline, assignedTo, status };
+    admin.tasksCreated.push(task);
+    await admin.save();
+
+    await User.updateMany(
+      { _id: { $in: assignedTo } },
+      { $push: { "tasks.notCompleted": task } }
+    );
+
+    res.status(201).json({ message: "Task created successfully!", task });
+  } catch (error) {
+    console.error("Error creating task:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Promote User to Admin Route
+router.put("/promote-to-admin/:userId", verifyToken, async (req, res) => {
+  try {
+    const requester = await User.findById(req.user.id);
+    if (!requester || requester.category !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Only admins can promote users." });
+    }
+
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.category = "admin";
+    await user.save();
+
+    res.status(200).json({ message: "User promoted to admin successfully!" });
+  } catch (error) {
+    console.error("Error promoting user to admin:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update Profile Route
+router.put("/update-profile", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // Extract user ID from the token
+    const updates = req.body; // Get the updates from the request body
+
+    console.log("User ID:", userId);
+    console.log("Updates received:", updates);
+
+    const user = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({ message: "Profile updated successfully.", user });
+  } catch (err) {
+    console.error("Error updating profile:", err);
+    res.status(500).json({ message: "Server error.", error: err.message });
+  }
+});
+
+// Fetch all users
+router.get("/", verifyToken, async (req, res) => {
+  try {
+    const users = await User.find({}, "fullName _id"); // Fetch only fullName and _id
+    res.status(200).json(users);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ message: "Failed to fetch users." });
+  }
+});
+
 module.exports = router;

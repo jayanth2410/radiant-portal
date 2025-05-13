@@ -19,7 +19,7 @@ const HomePage = () => {
 
   return (
     <div className="flex-grow-1 mb-5">
-      <h3>Welcome back, {user.fullName}</h3>
+      <h3 className="text-white">Welcome back, {user.fullName}</h3>
       <p className="text-info">
         Here's what's happening with your projects today.
       </p>
