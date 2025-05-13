@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react"; // Add useContext here
 import "bootstrap/dist/css/bootstrap.min.css";
+import { UserContext } from "./UserContext";
 import {
   FaHome,
   FaUser,
@@ -14,9 +15,11 @@ import {
 
 const HomePage = () => {
   const activity = ["activity1", "activity2", "activity3"];
+  const { user } = useContext(UserContext);
+
   return (
     <div className="flex-grow-1 mb-5">
-      <h3>Welcome back, username</h3>
+      <h3>Welcome back, {user.fullName}</h3>
       <p className="text-info">
         Here's what's happening with your projects today.
       </p>

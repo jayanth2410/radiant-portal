@@ -37,31 +37,40 @@ export default function LoginPage() {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault(); // Prevent form reload
+  e.preventDefault();
 
-    const email = e.target.email.value;
-    const password = e.target.password.value;
+  const email = e.target.email.value;
+  const password = e.target.password.value;
 
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    const response = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await response.json();
-      if (response.ok) {
-        toast.success("Login successful! Redirecting to dashboard...");
-        localStorage.setItem("token", data.token); // Store JWT
-        navigate("/dashboard"); // Redirect to the home page
+    const data = await response.json();
+    if (response.ok) {
+      toast.success("Login successful! Redirecting...");
+      localStorage.setItem("token", data.token); // Store the token in localStorage
+      console.log("token: " + localStorage.getItem("token"));
+      
+      // Redirect based on the user's category
+      if (data.user.category === "admin") {
+        navigate("/admin"); // Redirect to admin dashboard
+      } else if (data.user.category === "user") {
+        navigate("/dashboard"); // Redirect to user dashboard
       } else {
-        toast.error(data.message);
+        toast.error("Invalid user category.");
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      toast.error("An error occurred. Please try again.");
+    } else {
+      toast.error(data.message);
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    toast.error("An error occurred. Please try again.");
+  }
+};
 
   return (
     <div className="login-container">
