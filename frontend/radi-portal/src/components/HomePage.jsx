@@ -20,6 +20,7 @@ const currentDate = new Date("2025-05-14T18:32:00+05:30");
 
 const HomePage = () => {
   const { user, refetchUser } = useContext(UserContext);
+  console.log("homepage line 23: " + JSON.stringify(user, null, 2));
 
   // State for marking/undoing task completion
   const [showConfirmComplete, setShowConfirmComplete] = useState(false);
@@ -77,7 +78,8 @@ const HomePage = () => {
     const completedTasks = tasks.filter((task) =>
       ["completed", "completed after deadline"].includes(task.status)
     ).length;
-    const percentage = total > 0 ? Math.round((completedTasks / total) * 100) : 0;
+    const percentage =
+      total > 0 ? Math.round((completedTasks / total) * 100) : 0;
     setCompletionPercentage(percentage);
 
     // Determine recent tasks based on user role
@@ -93,9 +95,7 @@ const HomePage = () => {
     }
 
     // Sort tasks by deadline (ascending)
-    recent = recent.sort(
-      (a, b) => new Date(a.deadline) - new Date(b.deadline)
-    );
+    recent = recent.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
     setRecentTasks(recent);
   }, [user]); // Dependency: user only
 
@@ -184,9 +184,10 @@ const HomePage = () => {
   return (
     <div className="flex-grow-1 mb-5">
       <div className="d-flex align-items-center mb-3">
-       
         <div>
-          <h3 className="text-white">Welcome back, {user?.fullName || "User"}</h3>
+          <h3 className="text-white">
+            Welcome back, {user?.fullName || "User"}
+          </h3>
           <p className="text-info">
             Here's what's happening with your projects today.
           </p>

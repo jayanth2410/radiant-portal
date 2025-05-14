@@ -21,10 +21,12 @@ const Profile = () => {
   const [success, setSuccess] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [crop, setCrop] = useState({
-    unit: "%",
-    width: 50,
-    height: 50,
+    unit: "px",
+    width: 200, // Increased for better quality
+    height: 200,
     aspect: 1,
+    x: 0,
+    y: 0,
   });
   const [croppedImage, setCroppedImage] = useState(null);
   const [showCropModal, setShowCropModal] = useState(false);
@@ -48,7 +50,7 @@ const Profile = () => {
           setProfile({
             profilePicture:
               data.profilePicture ||
-              "https://th.bing.com/th/id/OIP.RKrPgszyZzEt38bVz8yeTQHaHa?w=177&h=180&c=7&r=0&o=5&cb=iwc2&dpr=1.3&pid=1.7",
+              "https://via.placeholder.com/100?text=No+Image",
             name: data.fullName,
             id: data.id,
             dob: formatDate(data.dateOfBirth),
@@ -72,7 +74,6 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
-  // Helper function to format date as dd-mm-yyyy
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -93,6 +94,7 @@ const Profile = () => {
       console.log("[DEBUG] File selected:", {
         name: file.name,
         size: file.size,
+        type: file.type,
       });
       const reader = new FileReader();
       reader.onload = () => {
@@ -103,15 +105,23 @@ const Profile = () => {
     }
   };
 
-  const getCroppedImg = useCallback(() => {
-    if (!imageRef || !crop.width || !crop.height) return;
+  const getCroppedImg = useCallback(async () => {
+    if (!imageRef || !crop.width || !crop.height) {
+      console.log("[DEBUG] Cannot crop: imageRef or crop dimensions missing");
+      return null;
+    }
 
     const canvas = document.createElement("canvas");
     const scaleX = imageRef.naturalWidth / imageRef.width;
     const scaleY = imageRef.naturalHeight / imageRef.height;
-    canvas.width = crop.width * scaleX;
-    canvas.height = crop.height * scaleY;
+    const targetSize = 200; // Increased for better quality
+    canvas.width = targetSize;
+    canvas.height = targetSize;
     const ctx = canvas.getContext("2d");
+
+    // Improve rendering quality
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 
     ctx.drawImage(
       imageRef,
@@ -121,15 +131,27 @@ const Profile = () => {
       crop.height * scaleY,
       0,
       0,
-      crop.width * scaleX,
-      crop.height * scaleY
+      targetSize,
+      targetSize
     );
 
     return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        console.log("[DEBUG] Cropped image blob created:", { size: blob.size });
-        resolve(blob);
-      }, "image/jpeg");
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            console.log("[DEBUG] Cropped image blob created:", {
+              size: blob.size,
+              type: blob.type,
+            });
+            resolve(blob);
+          } else {
+            console.log("[DEBUG] Failed to create cropped blob");
+            resolve(null);
+          }
+        },
+        "image/jpeg",
+        1.0 // Maximum quality
+      );
     });
   }, [imageRef, crop]);
 
@@ -137,10 +159,12 @@ const Profile = () => {
     const croppedBlob = await getCroppedImg();
     if (croppedBlob) {
       const croppedUrl = URL.createObjectURL(croppedBlob);
-      console.log("[DEBUG] Cropped image URL created");
-      setCroppedImage(croppedUrl);
+      console.log("[DEBUG] Cropped image URL created:", croppedUrl);
+      setCroppedImage(croppedBlob);
       setProfile({ ...profile, profilePicture: croppedUrl });
       setShowCropModal(false);
+    } else {
+      setError("Failed to crop the image.");
     }
   };
 
@@ -151,11 +175,8 @@ const Profile = () => {
       return;
     }
     try {
-      const croppedBlob = await getCroppedImg();
-      if (!croppedBlob) return;
-
       const formData = new FormData();
-      formData.append("profilePicture", croppedBlob, "profile.jpg");
+      formData.append("profilePicture", croppedImage, "profile.jpg");
       console.log("[DEBUG] Sending profile picture to backend");
 
       const response = await fetch(
@@ -179,7 +200,6 @@ const Profile = () => {
         setSuccess("Profile picture updated successfully!");
         setCroppedImage(null);
 
-        // Refresh profile data
         const updatedProfileResponse = await fetch(
           "http://localhost:5000/api/auth/me",
           {
@@ -197,7 +217,9 @@ const Profile = () => {
               : "null",
           });
           setProfile({
-            profilePicture: updatedProfileData.profilePicture || "/",
+            profilePicture:
+              updatedProfileData.profilePicture ||
+              "https://via.placeholder.com/100?text=No+Image",
             name: updatedProfileData.fullName,
             id: updatedProfileData.id,
             dob: formatDate(updatedProfileData.dateOfBirth),
@@ -206,6 +228,8 @@ const Profile = () => {
             yearsOfExperience: updatedProfileData.yearsOfExperience,
             role: updatedProfileData.role,
           });
+        } else {
+          setError("Failed to refresh profile data.");
         }
       } else {
         console.log("[DEBUG] Failed to update profile picture:", data.message);
@@ -264,7 +288,9 @@ const Profile = () => {
               : "null",
           });
           setProfile({
-            profilePicture: updatedProfileData.profilePicture || "/",
+            profilePicture:
+              updatedProfileData.profilePicture ||
+              "https://via.placeholder.com/100?text=No+Image",
             name: updatedProfileData.fullName,
             id: updatedProfileData.id,
             dob: formatDate(updatedProfileData.dateOfBirth),
@@ -325,8 +351,8 @@ const Profile = () => {
           style={{
             width: "100px",
             height: "100px",
-            backgroundColor: "#333",
             overflow: "hidden",
+            backgroundColor: "#333",
             display: "inline-block",
           }}
         >
@@ -334,7 +360,16 @@ const Profile = () => {
             <img
               src={profile.profilePicture}
               alt="Profile"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                borderRadius: "50%",
+              }}
+              onError={(e) => {
+                console.log("[DEBUG] Image failed to load:", profile.profilePicture);
+                e.target.src = "https://via.placeholder.com/100?text=Error";
+              }}
             />
           ) : (
             <div
@@ -395,11 +430,18 @@ const Profile = () => {
                     onChange={(newCrop) => setCrop(newCrop)}
                     circularCrop
                     aspect={1}
+                    keepSelection
                   >
                     <img
                       src={selectedImage}
                       alt="Crop"
-                      onLoad={(e) => setImageRef(e.currentTarget)}
+                      onLoad={(e) => {
+                        console.log("[DEBUG] Crop image loaded:", {
+                          naturalWidth: e.currentTarget.naturalWidth,
+                          naturalHeight: e.currentTarget.naturalHeight,
+                        });
+                        setImageRef(e.currentTarget);
+                      }}
                     />
                   </ReactCrop>
                 )}

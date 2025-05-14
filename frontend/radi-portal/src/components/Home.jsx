@@ -10,6 +10,7 @@ const Home = () => {
     <div>
       <h1>Welcome, {user.fullName}!</h1>
       <p>Email: {user.email}</p>
+      {/* <p>{user.profilePicture}</p> */}
     </div>
   );
 };
