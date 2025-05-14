@@ -1,9 +1,11 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { UserContext } from "./UserContext";
-import UserTable from "./UserTable";
 import HomePage from "./HomePage";
+import UserTable from "./UserTable";
 import Tasks from "./Tasks";
 import ErrorBoundary from "./ErrorBoundary";
+import Profile from "./Profile";
+import defaultImage from "../assets/default-profile.jpg"; // adjust path if needed
 
 const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -12,17 +14,28 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeSection, setActiveSection] = useState("Dashboard");
   const [tasks, setTasks] = useState([]);
-  const [users, setUsers] = useState([]); // State to store users
-  const { user, loading } = useContext(UserContext);
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading: contextLoading } = useContext(UserContext);
 
   useEffect(() => {
-    if (user) {
-      console.log("Admin User Data:", user);
-    }
-  }, [user]);
+    const fetchAdminData = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/admin", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await response.json();
+        if (!response.ok)
+          setError(data.message || "Failed to fetch admin data");
+      } catch (error) {
+        console.error("Error fetching admin data:", error);
+        setError("Error fetching admin data");
+      }
+    };
 
-  // Fetch users from the backend
-  useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await fetch("http://localhost:5000/api/users", {
@@ -30,29 +43,36 @@ const AdminDashboard = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch users.");
-        }
-
         const data = await response.json();
-        setUsers(data); // Set the fetched users
-        console.log("Users Data in AdminPanel:", users);
-      } catch (err) {
-        console.error("Error fetching users:", err);
+        if (response.ok) setUsers(data.users);
+        else setError(data.message || "Failed to fetch users");
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setError("Error fetching users");
       }
     };
 
-    fetchUsers();
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchAdminData(), fetchUsers()]);
+      setIsLoading(false);
+    };
+
+    loadData();
   }, []);
 
-  if (loading) {
+  if (contextLoading || isLoading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center min-vh-100"
-        style={{ backgroundColor: "#121212", color: "#fff" }}
-      >
+      <div className="d-flex justify-content-center align-items-center min-vh-100 bg-black text-white">
         <h2>Loading...</h2>
+      </div>
+    );
+  }
+
+  if (!user || user.category !== "admin") {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100 bg-black text-white">
+        <h2>Access denied. Admins only.</h2>
       </div>
     );
   }
@@ -61,6 +81,8 @@ const AdminDashboard = () => {
     switch (activeSection) {
       case "Dashboard":
         return <HomePage />;
+      case "Profile":
+        return <Profile />;
       case "Users":
         return (
           <ErrorBoundary>
@@ -92,10 +114,11 @@ const AdminDashboard = () => {
 
   return (
     <div
-      className="d-flex"
-      style={{ minHeight: "100vh", backgroundColor: "#121212" }}
+      className="d-flex min-vh-100"
+      style={{ backgroundColor: "#000", color: "#fff" }}
     >
-      <div
+      {/* Sidebar */}
+      <aside
         className="d-flex flex-column justify-content-between p-3"
         style={{
           width: "250px",
@@ -109,84 +132,39 @@ const AdminDashboard = () => {
       >
         <div>
           <div className="d-flex align-items-center mb-4">
-            <div
-              className="rounded-circle"
-              style={{
-                width: "48px",
-                height: "48px",
-                backgroundColor: "#7c3aed",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                color: "#fff",
-              }}
-            >
-              <i className="bi bi-person"></i>
-            </div>
-            <div className="ms-3 text-white">
-              <h5 className="mb-0">{user.fullName}</h5>
-              <small>{user.role}</small>
+            <img
+              src={user.profileImage || defaultImage}
+              alt="Profile"
+              className="rounded-circle me-3"
+              style={{ width: "48px", height: "48px", objectFit: "cover" }}
+            />
+            <div>
+              <h6 className="mb-0 text-white">{user.fullName}</h6>
+              <small className="text">{user.role || "no-category"}</small>
             </div>
           </div>
 
           <nav className="nav flex-column">
-            <button
-              className={`nav-link text-white ${
-                activeSection === "Dashboard" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-              }}
-              onClick={() => setActiveSection("Dashboard")}
-            >
-              Dashboard
-            </button>
-            <button
-              className={`nav-link text-white ${
-                activeSection === "Users" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-              }}
-              onClick={() => setActiveSection("Users")}
-            >
-              Users
-            </button>
-            <button
-              className={`nav-link text-white ${
-                activeSection === "Tasks" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-              }}
-              onClick={() => setActiveSection("Tasks")}
-            >
-              Tasks
-            </button>
-            <button
-              className={`nav-link text-white ${
-                activeSection === "Settings" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-                pointerEvents: "none",
-              }}
-              onClick={() => setActiveSection("Settings")}
-            >
-              Settings
-            </button>
+            {["Dashboard", "Profile", "Users", "Tasks", "Settings"].map(
+              (section) => (
+                <button
+                  key={section}
+                  className={`nav-link text-white ${
+                    activeSection === section ? "bg-dark rounded mb-2" : ""
+                  }`}
+                  style={{
+                    padding: "10px",
+                    transition: "background-color 0.1s ease",
+                    border: "none",
+                    background: "none",
+                    pointerEvents: section === "Settings" ? "none" : "auto",
+                  }}
+                  onClick={() => setActiveSection(section)}
+                >
+                  {section}
+                </button>
+              )
+            )}
           </nav>
         </div>
 
@@ -203,9 +181,10 @@ const AdminDashboard = () => {
             <i className="bi bi-box-arrow-right me-2"></i> Logout
           </a>
         </div>
-      </div>
+      </aside>
 
-      <div
+      {/* Main content */}
+      <main
         className="container py-4 flex-grow-1"
         style={{
           marginLeft: "250px",
@@ -213,8 +192,9 @@ const AdminDashboard = () => {
           height: "100vh",
         }}
       >
+        {error && <div className="alert alert-danger">{error}</div>}
         {renderContent()}
-      </div>
+      </main>
     </div>
   );
 };

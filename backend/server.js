@@ -19,19 +19,19 @@ mongoose
   })
   .then(() => {
     console.log("MongoDB connected");
-    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+    app.listen(PORT, () =>
+      console.log(`Server running on http://localhost:${PORT}`)
+    );
   })
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes
-const authRoutes = require("./routes/auth");
-app.use("/api/auth", authRoutes);
-
-const tasksRoutes = require("./routes/tasks");
-app.use("/api/tasks", tasksRoutes);
-
-const usersRoutes = require("./routes/users");
-app.use("/api/users", usersRoutes);
-
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/tasks", require("./routes/tasks"));
+app.use("/api/users", require("./routes/users"));
+// Catch-all route for 404 errors (optional, added previously)
+app.use((req, res) => {
+  res.status(404).json({ message: "Endpoint not found" });
+});
 // Start Server
 const PORT = 5000;

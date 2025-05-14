@@ -1,46 +1,62 @@
 import React, { createContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Line 9: This should now work
 
-  const fetchUserData = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
+  const fetchUser = async () => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        navigate("/"); // Redirect to login if no token
+        return;
+      }
+
       const response = await fetch("http://localhost:5000/api/auth/me", {
-        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      const data = await response.json();
       if (response.ok) {
-        const data = await response.json();
-        setUser(data); // Set the user data
+        setUser(data);
       } else {
-        setUser(null); // Clear the user state if the token is invalid
+        localStorage.removeItem("token");
+        navigate("/"); // Redirect to login on error
       }
-    } catch (err) {
-      console.error("Error fetching user data:", err);
-      setUser(null);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      localStorage.removeItem("token");
+      navigate("/"); // Redirect to login on error
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUserData();
+    fetchUser();
   }, []);
 
+  const refetchUser = async () => {
+    await fetchUser();
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+    navigate("/");
+  };
+
   return (
-    <UserContext.Provider value={{ user, setUser, loading }}>
+    <UserContext.Provider
+      value={{ user, setUser, refetchUser, logout, loading }}
+    >
       {children}
     </UserContext.Provider>
   );
