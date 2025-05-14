@@ -2,9 +2,10 @@ import React, { useState, useContext, useEffect } from "react";
 import Profile from "./Profile";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Certification from "./Certifications";
-import Projects from "./Projects";
+// import Projects from "./Projects";
 import Home from "./HomePage";
 import { UserContext } from "./UserContext";
+import UserTasks from "./UserTasks";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Home");
@@ -31,7 +32,7 @@ const Dashboard = () => {
       case "Certifications":
         return <Certification />;
       case "Projects":
-        return <Projects />;
+        return <UserTasks />;
       default:
         return <h2>Welcome back, {user.fullName}!</h2>;
     }

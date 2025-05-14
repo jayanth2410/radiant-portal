@@ -1,7 +1,7 @@
-import React, { useState, useContext, useEffect } from "react";
-import { UserContext } from "./UserContext";
+import React, { useState, useEffect, useContext } from "react";
+import { UserContext } from "./UserContext"; // Assuming this is your context file
+import HomePage from "./HomePage"; // Adjust imports as needed
 import UserTable from "./UserTable";
-import HomePage from "./HomePage";
 import Tasks from "./Tasks";
 import ErrorBoundary from "./ErrorBoundary";
 
@@ -12,17 +12,34 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeSection, setActiveSection] = useState("Dashboard");
   const [tasks, setTasks] = useState([]);
-  const [users, setUsers] = useState([]); // State to store users
-  const { user, loading } = useContext(UserContext);
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading: contextLoading } = useContext(UserContext);
 
+  // Fetch admin user data (if not already handled by UserContext)
   useEffect(() => {
-    if (user) {
-      console.log("Admin User Data:", user);
-    }
-  }, [user]);
+    const fetchAdminData = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/admin", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          console.log("Admin User Data:", data.user);
+          // If UserContext doesn't set the user, you can set it in local state
+          // For now, we assume UserContext handles this
+        } else {
+          setError(data.message || "Failed to fetch admin data");
+        }
+      } catch (error) {
+        console.error("Error fetching admin data:", error);
+        setError("Error fetching admin data");
+      }
+    };
 
-  // Fetch users from the backend
-  useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await fetch("http://localhost:5000/api/users", {
@@ -30,29 +47,55 @@ const AdminDashboard = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch users.");
-        }
-
         const data = await response.json();
-        setUsers(data); // Set the fetched users
-        console.log("Users Data in AdminPanel:", users);
-      } catch (err) {
-        console.error("Error fetching users:", err);
+        if (response.ok) {
+          setUsers(data.users);
+          console.log("Users Data in AdminPanel:", data.users);
+        } else {
+          setError(data.message || "Failed to fetch users");
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setError("Error fetching users");
       }
     };
 
-    fetchUsers();
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchAdminData(), fetchUsers()]);
+      setIsLoading(false);
+    };
+
+    loadData();
   }, []);
 
-  if (loading) {
+  // Log user data from context (for debugging)
+  useEffect(() => {
+    if (user) {
+      console.log("Admin User Data from Context:", user);
+    }
+  }, [user]);
+
+  // Combine loading states
+  if (contextLoading || isLoading) {
     return (
       <div
         className="d-flex justify-content-center align-items-center min-vh-100"
         style={{ backgroundColor: "#121212", color: "#fff" }}
       >
         <h2>Loading...</h2>
+      </div>
+    );
+  }
+
+  // If user is not an admin, show an error (optional, depending on your requirements)
+  if (!user || user.category !== "admin") {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center min-vh-100"
+        style={{ backgroundColor: "#121212", color: "#fff" }}
+      >
+        <h2>Access denied. Admins only.</h2>
       </div>
     );
   }
@@ -125,7 +168,7 @@ const AdminDashboard = () => {
             </div>
             <div className="ms-3 text-white">
               <h5 className="mb-0">{user.fullName}</h5>
-              <small>{user.role}</small>
+              <small>{user.category || "Admin"}</small>
             </div>
           </div>
 
@@ -213,6 +256,7 @@ const AdminDashboard = () => {
           height: "100vh",
         }}
       >
+        {error && <div className="alert alert-danger">{error}</div>}
         {renderContent()}
       </div>
     </div>

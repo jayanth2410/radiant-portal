@@ -88,34 +88,6 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// Create Task Route
-router.post("/admin/create-task", verifyToken, async (req, res) => {
-  const { title, description, deadline, assignedTo, status } = req.body;
-
-  try {
-    const admin = await User.findById(req.user.id);
-    if (!admin || admin.category !== "admin") {
-      return res
-        .status(403)
-        .json({ message: "Access denied. Only admins can create tasks." });
-    }
-
-    const task = { title, description, deadline, assignedTo, status };
-    admin.tasksCreated.push(task);
-    await admin.save();
-
-    await User.updateMany(
-      { _id: { $in: assignedTo } },
-      { $push: { "tasks.notCompleted": task } }
-    );
-
-    res.status(201).json({ message: "Task created successfully!", task });
-  } catch (error) {
-    console.error("Error creating task:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
 // Promote User to Admin Route
 router.put("/promote-to-admin/:userId", verifyToken, async (req, res) => {
   try {
@@ -144,8 +116,8 @@ router.put("/promote-to-admin/:userId", verifyToken, async (req, res) => {
 // Update Profile Route
 router.put("/update-profile", verifyToken, async (req, res) => {
   try {
-    const userId = req.user.id; // Extract user ID from the token
-    const updates = req.body; // Get the updates from the request body
+    const userId = req.user.id;
+    const updates = req.body;
 
     console.log("User ID:", userId);
     console.log("Updates received:", updates);
@@ -169,11 +141,33 @@ router.put("/update-profile", verifyToken, async (req, res) => {
 // Fetch all users
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const users = await User.find({}, "fullName _id"); // Fetch only fullName and _id
+    const users = await User.find({}, "fullName _id");
     res.status(200).json(users);
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ message: "Failed to fetch users." });
+  }
+});
+
+// Get admin user data
+router.get("/admin", verifyToken, async (req, res) => {
+  try {
+    // req.user is set by the verifyToken middleware
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.category !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Admins only." });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching admin data:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

@@ -1,30 +1,766 @@
 [{
   "_id": {
-    "$oid": "6821e879ae88f70d6faece85"
+    "$oid": "682379fab78885bb78a0b5c6"
   },
-  "fullName": "Jayanth M",
-  "email": "jayanth24102003@gmail.com",
-  "password": "$2b$10$iAEPZF5Q2zuZ2gFM8xjEp.qlrB9I/d.YXXd.kMENjsn6.2TNPXJZm",
-  "__v": 0,
-  "category": "user"
+  "fullName": "Admin 1",
+  "email": "admin1@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin1",
+  "dateOfBirth": {
+    "$date": "1980-02-01T18:30:00.000Z"
+  },
+  "phone": "9876543211",
+  "address": "Admin Address 1",
+  "yearsOfExperience": 14,
+  "category": "admin",
+  "projects": [
+    "Admin Project 1",
+    "Admin Project 2"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 1 - Complete Documentation",
+      "description": "Task assigned by Admin 1 to User 1",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d1"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-14T16:57:30.795Z"
+      },
+      "status": "completed",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5dc"
+      }
+    },
+    {
+      "assignedTo": [],
+      "status": "pending",
+      "_id": {
+        "$oid": "6823b581274fbf97930fa560"
+      }
+    },
+    {
+      "assignedTo": [],
+      "status": "pending",
+      "_id": {
+        "$oid": "6823bc46274fbf97930fa5a2"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
 },
 {
   "_id": {
-    "$oid": "6821eb40656c3f0536db165f"
+    "$oid": "682379fab78885bb78a0b5c7"
   },
-  "fullName": "Srivathsala R",
-  "email": "srivathsala.cb21@bitsathy.ac.in",
-  "password": "$2b$10$yX37nCqfFMNfTcFW1XDD6eYJUV7mC47u8Im/6O/4RcQ2nTy377bam",
-  "__v": 0,
-  "category": "user"
+  "fullName": "Admin 2",
+  "email": "admin2@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin2",
+  "dateOfBirth": {
+    "$date": "1980-03-02T18:30:00.000Z"
+  },
+  "phone": "9876543212",
+  "address": "Admin Address 2",
+  "yearsOfExperience": 9,
+  "category": "admin",
+  "projects": [
+    "Admin Project 2",
+    "Admin Project 3"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 2 - Complete Documentation",
+      "description": "Task assigned by Admin 2 to User 2",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d2"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-15T16:57:30.815Z"
+      },
+      "status": "pending",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5df"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
 },
 {
   "_id": {
-    "$oid": "6823299a7b3eda76355870c7"
+    "$oid": "682379fab78885bb78a0b5c8"
   },
-  "fullName": "admin",
-  "email": "admin@gmail.com",
-  "password": "$2b$10$NCKYYnq3A0AZB51IRCe0t./Ijblxh7cYbpc20dMuni9PikZ5OwvHq",
-  "__v": 0,
-  "category": "admin"
+  "fullName": "Admin 3",
+  "email": "admin3@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin3",
+  "dateOfBirth": {
+    "$date": "1980-04-03T18:30:00.000Z"
+  },
+  "phone": "9876543213",
+  "address": "Admin Address 3",
+  "yearsOfExperience": 12,
+  "category": "admin",
+  "projects": [
+    "Admin Project 3",
+    "Admin Project 4"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 3 - Complete Documentation",
+      "description": "Task assigned by Admin 3 to User 3",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d3"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-16T16:57:30.820Z"
+      },
+      "status": "completed",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5e2"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5c9"
+  },
+  "fullName": "Admin 4",
+  "email": "admin4@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin4",
+  "dateOfBirth": {
+    "$date": "1980-05-04T18:30:00.000Z"
+  },
+  "phone": "9876543214",
+  "address": "Admin Address 4",
+  "yearsOfExperience": 12,
+  "category": "admin",
+  "projects": [
+    "Admin Project 4",
+    "Admin Project 5"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 4 - Complete Documentation",
+      "description": "Task assigned by Admin 4 to User 4",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d4"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-17T16:57:30.823Z"
+      },
+      "status": "pending",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5e5"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5ca"
+  },
+  "fullName": "Admin 5",
+  "email": "admin5@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin5",
+  "dateOfBirth": {
+    "$date": "1980-06-05T18:30:00.000Z"
+  },
+  "phone": "9876543215",
+  "address": "Admin Address 5",
+  "yearsOfExperience": 10,
+  "category": "admin",
+  "projects": [
+    "Admin Project 5",
+    "Admin Project 6"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 5 - Complete Documentation",
+      "description": "Task assigned by Admin 5 to User 5",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d5"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-18T16:57:30.826Z"
+      },
+      "status": "completed",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5e8"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5cb"
+  },
+  "fullName": "Admin 6",
+  "email": "admin6@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin6",
+  "dateOfBirth": {
+    "$date": "1980-07-06T18:30:00.000Z"
+  },
+  "phone": "9876543216",
+  "address": "Admin Address 6",
+  "yearsOfExperience": 9,
+  "category": "admin",
+  "projects": [
+    "Admin Project 6",
+    "Admin Project 7"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 6 - Complete Documentation",
+      "description": "Task assigned by Admin 6 to User 6",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d6"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-19T16:57:30.829Z"
+      },
+      "status": "pending",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5eb"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5cc"
+  },
+  "fullName": "Admin 7",
+  "email": "admin7@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin7",
+  "dateOfBirth": {
+    "$date": "1980-08-07T18:30:00.000Z"
+  },
+  "phone": "9876543217",
+  "address": "Admin Address 7",
+  "yearsOfExperience": 14,
+  "category": "admin",
+  "projects": [
+    "Admin Project 7",
+    "Admin Project 8"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 7 - Complete Documentation",
+      "description": "Task assigned by Admin 7 to User 7",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d7"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-20T16:57:30.832Z"
+      },
+      "status": "completed",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5ee"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5cd"
+  },
+  "fullName": "Admin 8",
+  "email": "admin8@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin8",
+  "dateOfBirth": {
+    "$date": "1980-09-08T18:30:00.000Z"
+  },
+  "phone": "9876543218",
+  "address": "Admin Address 8",
+  "yearsOfExperience": 11,
+  "category": "admin",
+  "projects": [
+    "Admin Project 8",
+    "Admin Project 9"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 8 - Complete Documentation",
+      "description": "Task assigned by Admin 8 to User 8",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d8"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-21T16:57:30.836Z"
+      },
+      "status": "pending",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5f1"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5ce"
+  },
+  "fullName": "Admin 9",
+  "email": "admin9@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin9",
+  "dateOfBirth": {
+    "$date": "1980-10-09T18:30:00.000Z"
+  },
+  "phone": "9876543219",
+  "address": "Admin Address 9",
+  "yearsOfExperience": 9,
+  "category": "admin",
+  "projects": [
+    "Admin Project 9",
+    "Admin Project 10"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 9 - Complete Documentation",
+      "description": "Task assigned by Admin 9 to User 9",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5d9"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-22T16:57:30.839Z"
+      },
+      "status": "completed",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5f4"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5cf"
+  },
+  "fullName": "Admin 10",
+  "email": "admin10@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "admin10",
+  "dateOfBirth": {
+    "$date": "1980-11-10T18:30:00.000Z"
+  },
+  "phone": "9876543210",
+  "address": "Admin Address 10",
+  "yearsOfExperience": 12,
+  "category": "admin",
+  "projects": [
+    "Admin Project 10",
+    "Admin Project 11"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": []
+  },
+  "tasksCreated": [
+    {
+      "title": "Task 10 - Complete Documentation",
+      "description": "Task assigned by Admin 10 to User 10",
+      "assignedTo": [
+        {
+          "$oid": "682379fab78885bb78a0b5da"
+        }
+      ],
+      "deadline": {
+        "$date": "2025-05-23T16:57:30.842Z"
+      },
+      "status": "pending",
+      "_id": {
+        "$oid": "682379fab78885bb78a0b5f7"
+      }
+    }
+  ],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d1"
+  },
+  "fullName": "User 1",
+  "email": "user1@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user1",
+  "dateOfBirth": {
+    "$date": "1995-02-01T18:30:00.000Z"
+  },
+  "phone": "1234567891",
+  "address": "User Address 1",
+  "yearsOfExperience": 10,
+  "category": "user",
+  "projects": [
+    "User Project 1",
+    "User Project 2"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [
+      "Task 1 - Complete Documentation"
+    ],
+    "notCompleted": []
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d2"
+  },
+  "fullName": "User 2",
+  "email": "user2@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user2",
+  "dateOfBirth": {
+    "$date": "2003-10-24T00:00:00.000Z"
+  },
+  "phone": "9876543210",
+  "address": "User Address 2",
+  "yearsOfExperience": 10,
+  "category": "user",
+  "projects": [
+    "User Project 2",
+    "User Project 3"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": [
+      "Task 2 - Complete Documentation",
+      "6823b581274fbf97930fa55e",
+      "6823bc46274fbf97930fa5a0"
+    ]
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d3"
+  },
+  "fullName": "User 3",
+  "email": "user3@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user3",
+  "dateOfBirth": {
+    "$date": "1995-04-03T18:30:00.000Z"
+  },
+  "phone": "1234567893",
+  "address": "User Address 3",
+  "yearsOfExperience": 10,
+  "category": "user",
+  "projects": [
+    "User Project 3",
+    "User Project 4"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [
+      "Task 3 - Complete Documentation"
+    ],
+    "notCompleted": []
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d4"
+  },
+  "fullName": "User 4",
+  "email": "user4@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user4",
+  "dateOfBirth": {
+    "$date": "1995-05-04T18:30:00.000Z"
+  },
+  "phone": "1234567894",
+  "address": "User Address 4",
+  "yearsOfExperience": 1,
+  "category": "user",
+  "projects": [
+    "User Project 4",
+    "User Project 5"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": [
+      "Task 4 - Complete Documentation"
+    ]
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d5"
+  },
+  "fullName": "User 5",
+  "email": "user5@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user5",
+  "dateOfBirth": {
+    "$date": "1995-06-05T18:30:00.000Z"
+  },
+  "phone": "1234567895",
+  "address": "User Address 5",
+  "yearsOfExperience": 6,
+  "category": "user",
+  "projects": [
+    "User Project 5",
+    "User Project 6"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [
+      "Task 5 - Complete Documentation"
+    ],
+    "notCompleted": []
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d6"
+  },
+  "fullName": "User 6",
+  "email": "user6@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user6",
+  "dateOfBirth": {
+    "$date": "1995-07-06T18:30:00.000Z"
+  },
+  "phone": "1234567896",
+  "address": "User Address 6",
+  "yearsOfExperience": 5,
+  "category": "user",
+  "projects": [
+    "User Project 6",
+    "User Project 7"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": [
+      "Task 6 - Complete Documentation"
+    ]
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d7"
+  },
+  "fullName": "User 7",
+  "email": "user7@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user7",
+  "dateOfBirth": {
+    "$date": "1995-08-07T18:30:00.000Z"
+  },
+  "phone": "1234567897",
+  "address": "User Address 7",
+  "yearsOfExperience": 4,
+  "category": "user",
+  "projects": [
+    "User Project 7",
+    "User Project 8"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [
+      "Task 7 - Complete Documentation"
+    ],
+    "notCompleted": []
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d8"
+  },
+  "fullName": "User 8",
+  "email": "user8@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user8",
+  "dateOfBirth": {
+    "$date": "1995-09-08T18:30:00.000Z"
+  },
+  "phone": "1234567898",
+  "address": "User Address 8",
+  "yearsOfExperience": 3,
+  "category": "user",
+  "projects": [
+    "User Project 8",
+    "User Project 9"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": [
+      "Task 8 - Complete Documentation"
+    ]
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5d9"
+  },
+  "fullName": "User 9",
+  "email": "user9@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user9",
+  "dateOfBirth": {
+    "$date": "1995-10-09T18:30:00.000Z"
+  },
+  "phone": "1234567899",
+  "address": "User Address 9",
+  "yearsOfExperience": 4,
+  "category": "user",
+  "projects": [
+    "User Project 9",
+    "User Project 10"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [
+      "Task 9 - Complete Documentation"
+    ],
+    "notCompleted": []
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
+},
+{
+  "_id": {
+    "$oid": "682379fab78885bb78a0b5da"
+  },
+  "fullName": "User 10",
+  "email": "user10@example.com",
+  "password": "$2b$10$ygk6PkxqQIqMQfX0owVv.udALdu1u7rbXhFCmkI9lQGkhzBYvflg.",
+  "id": "user10",
+  "dateOfBirth": {
+    "$date": "1995-11-10T18:30:00.000Z"
+  },
+  "phone": "1234567890",
+  "address": "User Address 10",
+  "yearsOfExperience": 10,
+  "category": "user",
+  "projects": [
+    "User Project 10",
+    "User Project 11"
+  ],
+  "certifications": "AWS",
+  "tasks": {
+    "completed": [],
+    "notCompleted": [
+      "Task 10 - Complete Documentation"
+    ]
+  },
+  "tasksCreated": [],
+  "__v": 1,
+  "role": "designer"
 }]

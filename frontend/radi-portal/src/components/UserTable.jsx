@@ -3,8 +3,8 @@ import { FaUserCircle } from "react-icons/fa";
 import * as XLSX from "xlsx";
 
 const UserTable = ({
-  users = [], // Default to an empty array
-  searchTerm = "", // Default to an empty string
+  users = [],
+  searchTerm = "",
   setSearchTerm,
   certificationFilter,
   setCertificationFilter,
@@ -50,13 +50,53 @@ const UserTable = ({
       Email: user.email,
       Certifications: user.certifications?.join(", ") || "N/A",
       Skills: user.skills?.join(", ") || "N/A",
-      Experience: user.experience || "N/A",
+      "Years of Experience": user.yearsOfExperience || "N/A", // Updated field name
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
     XLSX.writeFile(workbook, "Filtered_Users.xlsx");
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/users/${userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        // Refetch users after deletion
+        const updatedUsersResponse = await fetch(
+          "http://localhost:5000/api/users",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const updatedUsersData = await updatedUsersResponse.json();
+        if (updatedUsersResponse.ok) {
+          // Assuming the parent component passes a setUsers function
+          setUsers(updatedUsersData);
+          setCurrentPage(1);
+          alert("User deleted successfully");
+        } else {
+          alert("Failed to refresh user list.");
+        }
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Failed to delete user.");
+    }
   };
 
   return (
@@ -123,7 +163,7 @@ const UserTable = ({
                 <th>USER</th>
                 <th>CERTIFICATIONS</th>
                 <th>SKILLS</th>
-                <th>EXPERIENCE</th>
+                <th>YEARS OF EXPERIENCE</th>
                 <th>ACTIONS</th>
               </tr>
             </thead>
@@ -168,15 +208,23 @@ const UserTable = ({
                           </span>
                         ))
                       ) : (
-                        <span className="text">None</span>
+                        <span className="text-muted">None</span>
                       )}
                     </td>
-                    <td className="fw-bold">{user.yearsOfExperience || "N/A"}</td>
+                    <td className="fw-bold">
+                      {user.yearsOfExperience || "N/A"}
+                    </td>
                     <td>
-                      <button className="btn btn-outline-light btn-sm me-2">
+                      <button
+                        className="btn btn-outline-light btn-sm me-2"
+                        disabled
+                      >
                         <i className="bi bi-pencil"></i>
                       </button>
-                      <button className="btn btn-outline-danger btn-sm">
+                      <button
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={() => handleDeleteUser(user._id)}
+                      >
                         <i className="bi bi-trash"></i>
                       </button>
                     </td>
