@@ -3,13 +3,18 @@ import { Navigate } from "react-router-dom";
 import { UserContext } from "./UserContext";
 
 const PrivateRoute = ({ children }) => {
-  const { user } = useContext(UserContext);
+  const { user, loading } = useContext(UserContext);
 
-  const token = localStorage.getItem("token"); // Check if a token exists
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <h2 className="text-white">Loading...</h2>
+      </div>
+    );
+  }
 
-  // Redirect to login if no user or token is found
-  if (!user && !token) {
-    return <Navigate to="/" />;
+  if (!user) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

@@ -113,9 +113,7 @@ const Profile = () => {
         const updatedProfileData = await updatedProfileResponse.json();
         if (updatedProfileResponse.ok) {
           setProfile({
-            profilePicture:
-              updatedProfileData.profilePicture ||
-              "https://th.bing.com/th/id/OIP.RKrPgszyZzEt38bVz8yeTQHaHa?w=177&h=180&c=7&r=0&o=5&cb=iwc2&dpr=1.3&pid=1.7", // Use hardcoded image if none exists
+            profilePicture: updatedProfileData.profilePicture || "/", // Use hardcoded image if none exists
             name: updatedProfileData.fullName,
             id: updatedProfileData.id,
             dob: formatDate(updatedProfileData.dateOfBirth), // Format the date
@@ -152,7 +150,7 @@ const Profile = () => {
 
   return (
     <div className="mb-5">
-      <h2 className="mb-4">Profile</h2>
+      <h2 className="mb-4 text-white">Profile</h2>
 
       {success && (
         <div

@@ -13,6 +13,13 @@ const Tasks = ({ users }) => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [confirmInput, setConfirmInput] = useState("");
+  // State for updating tasks
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [taskToUpdate, setTaskToUpdate] = useState(null);
+  const [updateTitle, setUpdateTitle] = useState("");
+  const [updateDescription, setUpdateDescription] = useState("");
+  const [updateDeadline, setUpdateDeadline] = useState("");
+  const [updateAssignedUserIds, setUpdateAssignedUserIds] = useState([]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -139,6 +146,76 @@ const Tasks = ({ users }) => {
     }
   };
 
+  const initiateUpdate = (task) => {
+    setTaskToUpdate(task._id);
+    setUpdateTitle(task.title);
+    setUpdateDescription(task.description);
+    // Format deadline for datetime-local input
+    const formattedDeadline = new Date(task.deadline).toISOString().slice(0, 16);
+    setUpdateDeadline(formattedDeadline);
+    setUpdateAssignedUserIds(task.assignedTo.map((user) => user._id));
+    setShowUpdateModal(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+
+    if (!updateTitle || !updateDescription || !updateDeadline || updateAssignedUserIds.length === 0) {
+      toast.error("All fields are required");
+      return;
+    }
+
+    const formattedDeadline = new Date(updateDeadline).toISOString();
+
+    const updatedTask = {
+      title: updateTitle,
+      description: updateDescription,
+      deadline: formattedDeadline,
+      assignedTo: updateAssignedUserIds,
+    };
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/tasks/update-task/${taskToUpdate}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(updatedTask),
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        // Refetch tasks to update the list
+        const fetchResponse = await fetch("http://localhost:5000/api/tasks", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const fetchData = await fetchResponse.json();
+        if (fetchResponse.ok) {
+          setTasks(fetchData.tasks);
+        }
+
+        toast.success("Task updated successfully");
+        setShowUpdateModal(false);
+        setTaskToUpdate(null);
+        setUpdateTitle("");
+        setUpdateDescription("");
+        setUpdateDeadline("");
+        setUpdateAssignedUserIds([]);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error("Failed to update task.");
+    }
+  };
+
   const handleAddUser = (e) => {
     const userId = e.target.value;
     if (userId && !assignedUserIds.includes(userId)) {
@@ -151,12 +228,32 @@ const Tasks = ({ users }) => {
     setAssignedUserIds(assignedUserIds.filter((id) => id !== userId));
   };
 
+  const handleAddUpdateUser = (e) => {
+    const userId = e.target.value;
+    if (userId && !updateAssignedUserIds.includes(userId)) {
+      setUpdateAssignedUserIds([...updateAssignedUserIds, userId]);
+    }
+    e.target.value = "";
+  };
+
+  const handleRemoveUpdateUser = (userId) => {
+    setUpdateAssignedUserIds(updateAssignedUserIds.filter((id) => id !== userId));
+  };
+
   const availableUsers = users.filter(
     (user) => !assignedUserIds.includes(user._id)
   );
 
   const selectedUsers = users.filter((user) =>
     assignedUserIds.includes(user._id)
+  );
+
+  const availableUpdateUsers = users.filter(
+    (user) => !updateAssignedUserIds.includes(user._id)
+  );
+
+  const selectedUpdateUsers = users.filter((user) =>
+    updateAssignedUserIds.includes(user._id)
   );
 
   if (loading || !users) {
@@ -352,6 +449,12 @@ const Tasks = ({ users }) => {
                       </td>
                       <td>
                         <button
+                          className="btn btn-outline-primary btn-sm me-2"
+                          onClick={() => initiateUpdate(task)}
+                        >
+                          <i className="bi bi-pencil"></i>
+                        </button>
+                        <button
                           className="btn btn-outline-danger btn-sm"
                           onClick={() => initiateDelete(task._id)}
                         >
@@ -373,7 +476,7 @@ const Tasks = ({ users }) => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal for Deletion */}
       {showConfirmDelete && (
         <div
           className="modal fade show d-block"
@@ -397,7 +500,7 @@ const Tasks = ({ users }) => {
                   be undone.
                 </p>
                 <p>
-                  Please type <strong>CONFIRM</strong> to proceed:
+                  Please type <strong>CONFIRM</strong> to proceed "case sensitive":
                 </p>
                 <input
                   type="text"
@@ -422,6 +525,141 @@ const Tasks = ({ users }) => {
                 >
                   Delete
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Task Modal */}
+      {showUpdateModal && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          tabIndex="-1"
+          role="dialog"
+        >
+          <div className="modal-dialog" role="document">
+            <div className="modal-content bg-dark text-white">
+              <div className="modal-header">
+                <h5 className="modal-title">Update Task</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowUpdateModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleUpdate}>
+                  <div className="mb-3">
+                    <label
+                      htmlFor="updateTitle"
+                      className="form-label text-capitalize text-white"
+                    >
+                      Task Title
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control bg-dark text-white"
+                      id="updateTitle"
+                      value={updateTitle}
+                      onChange={(e) => setUpdateTitle(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label
+                      htmlFor="updateDescription"
+                      className="form-label text-capitalize text-white"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className="form-control bg-dark text-white"
+                      id="updateDescription"
+                      rows="4"
+                      value={updateDescription}
+                      onChange={(e) => setUpdateDescription(e.target.value)}
+                      required
+                    ></textarea>
+                  </div>
+                  <div className="mb-3">
+                    <label
+                      htmlFor="updateDeadline"
+                      className="form-label text-capitalize text-white"
+                    >
+                      Deadline
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="form-control bg-dark text-white"
+                      id="updateDeadline"
+                      value={updateDeadline}
+                      onChange={(e) => setUpdateDeadline(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label
+                      htmlFor="updateAssignedUser"
+                      className="form-label text-capitalize text-white"
+                    >
+                      Assign to Users
+                    </label>
+                    <select
+                      className="form-select bg-dark text-white"
+                      id="updateAssignedUser"
+                      onChange={handleAddUpdateUser}
+                    >
+                      <option value="" className="bg-dark text-white">
+                        Select a user to assign
+                      </option>
+                      {availableUpdateUsers.map((user) => (
+                        <option
+                          key={user._id}
+                          value={user._id}
+                          className="bg-dark text-white"
+                        >
+                          {user.fullName}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="mt-2 d-flex flex-wrap gap-2">
+                      {selectedUpdateUsers.length > 0 ? (
+                        selectedUpdateUsers.map((user) => (
+                          <span
+                            key={user._id}
+                            className="badge bg-primary d-flex align-items-center"
+                            style={{ fontSize: "0.9rem", padding: "0.5rem" }}
+                          >
+                            {user.fullName}
+                            <button
+                              type="button"
+                              className="btn-close btn-close-white ms-2"
+                              style={{ fontSize: "0.6rem" }}
+                              onClick={() => handleRemoveUpdateUser(user._id)}
+                              aria-label="Remove user"
+                            ></button>
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-muted">No users assigned yet</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowUpdateModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      Update Task
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

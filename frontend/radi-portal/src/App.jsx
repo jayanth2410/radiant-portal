@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"; // Import BrowserRouter
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Login from "./components/Login.jsx";
 import Dashboard from "./components/Dashboard.jsx";
@@ -9,13 +11,14 @@ import AdminPanel from "./components/AdminPanel.jsx";
 import Projects from "./components/Projects.jsx";
 import Certifications from "./components/Certifications.jsx";
 import Home from "./components/Home.jsx";
-import { UserProvider } from "./components/UserContext.jsx"; // Import UserProvider
-import PrivateRoute from "./components/PrivateRoute.jsx"; // Import PrivateRoute
-
+import { UserProvider } from "./components/UserContext.jsx";
+import PrivateRoute from "./components/PrivateRoute.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 function App() {
   return (
-    <UserProvider>
-      <Router>
+    <Router>
+      <ErrorBoundary>
+      <UserProvider>
         <Routes>
           {/* Public Route */}
           <Route path="/" element={<Login />} />
@@ -62,8 +65,10 @@ function App() {
             }
           />
         </Routes>
-      </Router>
-    </UserProvider>
+        <ToastContainer />
+      </UserProvider>
+      </ErrorBoundary>
+    </Router>
   );
 }
 

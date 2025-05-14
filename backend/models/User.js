@@ -1,7 +1,12 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs"); 
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
+  profilePicture: {
+    type: Buffer, // Store the image as binary data
+    default: null, // No image by default
+  }, // Updated profilePicture field to store binary data
+  
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },

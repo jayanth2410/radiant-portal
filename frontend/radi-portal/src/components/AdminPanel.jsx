@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
-import { UserContext } from "./UserContext"; // Assuming this is your context file
-import HomePage from "./HomePage"; // Adjust imports as needed
+import { UserContext } from "./UserContext";
+import HomePage from "./HomePage";
 import UserTable from "./UserTable";
 import Tasks from "./Tasks";
 import ErrorBoundary from "./ErrorBoundary";
+import Profile from "./Profile";
+import defaultImage from "../assets/default-profile.jpg"; // adjust path if needed
 
 const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,7 +19,6 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: contextLoading } = useContext(UserContext);
 
-  // Fetch admin user data (if not already handled by UserContext)
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
@@ -27,13 +28,8 @@ const AdminDashboard = () => {
           },
         });
         const data = await response.json();
-        if (response.ok) {
-          console.log("Admin User Data:", data.user);
-          // If UserContext doesn't set the user, you can set it in local state
-          // For now, we assume UserContext handles this
-        } else {
+        if (!response.ok)
           setError(data.message || "Failed to fetch admin data");
-        }
       } catch (error) {
         console.error("Error fetching admin data:", error);
         setError("Error fetching admin data");
@@ -48,12 +44,8 @@ const AdminDashboard = () => {
           },
         });
         const data = await response.json();
-        if (response.ok) {
-          setUsers(data.users);
-          console.log("Users Data in AdminPanel:", data.users);
-        } else {
-          setError(data.message || "Failed to fetch users");
-        }
+        if (response.ok) setUsers(data.users);
+        else setError(data.message || "Failed to fetch users");
       } catch (error) {
         console.error("Error fetching users:", error);
         setError("Error fetching users");
@@ -69,32 +61,17 @@ const AdminDashboard = () => {
     loadData();
   }, []);
 
-  // Log user data from context (for debugging)
-  useEffect(() => {
-    if (user) {
-      console.log("Admin User Data from Context:", user);
-    }
-  }, [user]);
-
-  // Combine loading states
   if (contextLoading || isLoading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center min-vh-100"
-        style={{ backgroundColor: "#121212", color: "#fff" }}
-      >
+      <div className="d-flex justify-content-center align-items-center min-vh-100 bg-black text-white">
         <h2>Loading...</h2>
       </div>
     );
   }
 
-  // If user is not an admin, show an error (optional, depending on your requirements)
   if (!user || user.category !== "admin") {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center min-vh-100"
-        style={{ backgroundColor: "#121212", color: "#fff" }}
-      >
+      <div className="d-flex justify-content-center align-items-center min-vh-100 bg-black text-white">
         <h2>Access denied. Admins only.</h2>
       </div>
     );
@@ -104,6 +81,8 @@ const AdminDashboard = () => {
     switch (activeSection) {
       case "Dashboard":
         return <HomePage />;
+      case "Profile":
+        return <Profile />;
       case "Users":
         return (
           <ErrorBoundary>
@@ -135,10 +114,11 @@ const AdminDashboard = () => {
 
   return (
     <div
-      className="d-flex"
-      style={{ minHeight: "100vh", backgroundColor: "#121212" }}
+      className="d-flex min-vh-100"
+      style={{ backgroundColor: "#000", color: "#fff" }}
     >
-      <div
+      {/* Sidebar */}
+      <aside
         className="d-flex flex-column justify-content-between p-3"
         style={{
           width: "250px",
@@ -152,84 +132,39 @@ const AdminDashboard = () => {
       >
         <div>
           <div className="d-flex align-items-center mb-4">
-            <div
-              className="rounded-circle"
-              style={{
-                width: "48px",
-                height: "48px",
-                backgroundColor: "#7c3aed",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                color: "#fff",
-              }}
-            >
-              <i className="bi bi-person"></i>
-            </div>
-            <div className="ms-3 text-white">
-              <h5 className="mb-0">{user.fullName}</h5>
-              <small>{user.category || "Admin"}</small>
+            <img
+              src={user.profileImage || defaultImage}
+              alt="Profile"
+              className="rounded-circle me-3"
+              style={{ width: "48px", height: "48px", objectFit: "cover" }}
+            />
+            <div>
+              <h6 className="mb-0 text-white">{user.fullName}</h6>
+              <small className="text-muted">{user.category || "admin"}</small>
             </div>
           </div>
 
           <nav className="nav flex-column">
-            <button
-              className={`nav-link text-white ${
-                activeSection === "Dashboard" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-              }}
-              onClick={() => setActiveSection("Dashboard")}
-            >
-              Dashboard
-            </button>
-            <button
-              className={`nav-link text-white ${
-                activeSection === "Users" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-              }}
-              onClick={() => setActiveSection("Users")}
-            >
-              Users
-            </button>
-            <button
-              className={`nav-link text-white ${
-                activeSection === "Tasks" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-              }}
-              onClick={() => setActiveSection("Tasks")}
-            >
-              Tasks
-            </button>
-            <button
-              className={`nav-link text-white ${
-                activeSection === "Settings" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-                pointerEvents: "none",
-              }}
-              onClick={() => setActiveSection("Settings")}
-            >
-              Settings
-            </button>
+            {["Dashboard", "Profile", "Users", "Tasks", "Settings"].map(
+              (section) => (
+                <button
+                  key={section}
+                  className={`nav-link text-white ${
+                    activeSection === section ? "bg-dark rounded mb-2" : ""
+                  }`}
+                  style={{
+                    padding: "10px",
+                    transition: "background-color 0.1s ease",
+                    border: "none",
+                    background: "none",
+                    pointerEvents: section === "Settings" ? "none" : "auto",
+                  }}
+                  onClick={() => setActiveSection(section)}
+                >
+                  {section}
+                </button>
+              )
+            )}
           </nav>
         </div>
 
@@ -246,9 +181,10 @@ const AdminDashboard = () => {
             <i className="bi bi-box-arrow-right me-2"></i> Logout
           </a>
         </div>
-      </div>
+      </aside>
 
-      <div
+      {/* Main content */}
+      <main
         className="container py-4 flex-grow-1"
         style={{
           marginLeft: "250px",
@@ -258,7 +194,7 @@ const AdminDashboard = () => {
       >
         {error && <div className="alert alert-danger">{error}</div>}
         {renderContent()}
-      </div>
+      </main>
     </div>
   );
 };

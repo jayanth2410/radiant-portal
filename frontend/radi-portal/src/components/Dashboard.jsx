@@ -5,7 +5,9 @@ import Certification from "./Certifications";
 // import Projects from "./Projects";
 import Home from "./HomePage";
 import { UserContext } from "./UserContext";
-import UserTasks from "./UserTasks";
+// import UserTasks from "./UserTasks";
+import Projects from "./Projects";
+import defaultImage from "../assets/default-profile.jpg";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Home");
@@ -32,7 +34,7 @@ const Dashboard = () => {
       case "Certifications":
         return <Certification />;
       case "Projects":
-        return <UserTasks />;
+        return <Projects />;
       default:
         return <h2>Welcome back, {user.fullName}!</h2>;
     }
@@ -60,22 +62,30 @@ const Dashboard = () => {
         <div>
           <div className="d-flex align-items-center mb-4">
             <div
-              className="rounded-circle"
+              className="rounded-circle overflow-hidden"
               style={{
                 width: "48px",
                 height: "48px",
-                backgroundColor: "#7c3aed",
+                backgroundColor: "#7c3aed", // Fallback background color if the image fails to load
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 color: "#fff",
               }}
             >
-              <i className="bi bi-person"></i>
+              <img
+                src={user?.profilePicture || defaultImage } // Fallback image if user.profilePicture is not available
+                alt="Profile"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover", // Ensure the image fills the circle without distortion
+                }}
+              />
             </div>
             <div className="ms-3">
-              <h5 className="mb-0">{user.fullName}</h5>
-              <small>{user.role}</small>
+              <h5 className="mb-0">{user?.fullName || "User"}</h5>
+              <small>{user?.role || "Role not set"}</small>
             </div>
           </div>
 
@@ -167,7 +177,7 @@ const Dashboard = () => {
       >
         {/* Main Content */}
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="text-white">Dashboard</h2>
+          {/* <h2 className="text-white">Dashboard</h2> */}
         </div>
 
         {renderContent()}

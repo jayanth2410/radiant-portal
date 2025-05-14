@@ -139,43 +139,185 @@ router.delete("/delete-task/:taskId", verifyToken, async (req, res) => {
   }
 });
 
-// Mark a task as completed
-router.post("/complete/:taskId", verifyToken, async (req, res) => {
+// Mark a task as completed (for users)
+router.put("/mark-completed/:taskId", verifyToken, async (req, res) => {
   try {
-    const { taskId } = req.params;
-
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const userTask = user.tasks.id(taskId);
-    if (!userTask) {
+    if (user.category !== "user") {
+      return res.status(403).json({ message: "Access denied. Users only." });
+    }
+
+    const task = user.tasks.id(req.params.taskId);
+    if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    const currentDate = new Date();
-    const deadline = new Date(userTask.deadline);
-    const newStatus =
+    if (task.status !== "pending") {
+      return res.status(400).json({ message: "Task is already completed" });
+    }
+
+    const currentDate = new Date("2025-05-14T16:07:00+05:30"); // Current date and time
+    const deadline = new Date(task.deadline);
+    task.status =
       currentDate > deadline ? "completed after deadline" : "completed";
 
-    userTask.status = newStatus;
-    await user.save();
-
-    const admin = await User.findOne({ "tasksCreated._id": taskId });
+    // Find the admin who assigned the task and update their tasksCreated
+    const admin = await User.findById(task.assignedBy);
     if (admin) {
-      const adminTask = admin.tasksCreated.id(taskId);
+      const adminTask = admin.tasksCreated.id(req.params.taskId);
       if (adminTask) {
-        adminTask.status = newStatus;
+        adminTask.status = task.status;
         await admin.save();
       }
     }
 
-    res
-      .status(200)
-      .json({ message: "Task marked as completed", status: newStatus });
+    await user.save();
+    res.status(200).json({ message: "Task marked as completed", task });
   } catch (error) {
-    console.error("Error completing task:", error);
+    console.error("Error marking task as completed:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// New route: Undo task completion (for users)
+router.put("/undo-complete/:taskId", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.category !== "user") {
+      return res.status(403).json({ message: "Access denied. Users only." });
+    }
+
+    const task = user.tasks.id(req.params.taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    if (task.status === "pending") {
+      return res.status(400).json({ message: "Task is not completed" });
+    }
+
+    task.status = "pending";
+
+    // Find the admin who assigned the task and update their tasksCreated
+    const admin = await User.findById(task.assignedBy);
+    if (admin) {
+      const adminTask = admin.tasksCreated.id(req.params.taskId);
+      if (adminTask) {
+        adminTask.status = task.status;
+        await admin.save();
+      }
+    }
+
+    await user.save();
+    res.status(200).json({ message: "Task completion undone", task });
+  } catch (error) {
+    console.error("Error undoing task completion:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.put("/update-task/:taskId", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.category !== "admin") {
+      return res.status(403).json({ message: "Access denied. Admins only." });
+    }
+
+    const task = user.tasksCreated.id(req.params.taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    const { title, description, deadline, assignedTo } = req.body;
+
+    // Validate required fields
+    if (
+      !title ||
+      !description ||
+      !deadline ||
+      !assignedTo ||
+      assignedTo.length === 0
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Validate assigned users exist
+    const assignedUsers = await User.find({ _id: { $in: assignedTo } });
+    if (assignedUsers.length !== assignedTo.length) {
+      return res
+        .status(400)
+        .json({ message: "One or more assigned users not found" });
+    }
+
+    // Update task details in admin's tasksCreated
+    task.title = title;
+    task.description = description;
+    task.deadline = new Date(deadline).toISOString();
+    task.assignedTo = assignedTo;
+
+    // Update the task in all assigned users' tasks array who already have it
+    await User.updateMany(
+      { _id: { $in: assignedTo }, "tasks._id": req.params.taskId },
+      {
+        $set: {
+          "tasks.$.title": title,
+          "tasks.$.description": description,
+          "tasks.$.deadline": task.deadline,
+          "tasks.$.assignedBy": user._id, // Ensure assignedBy is updated
+        },
+      }
+    );
+
+    // Remove the task from users who are no longer assigned
+    await User.updateMany(
+      { "tasks._id": req.params.taskId, _id: { $nin: assignedTo } },
+      { $pull: { tasks: { _id: req.params.taskId } } }
+    );
+
+    // Add the task to newly assigned users who don't have it
+    const usersWithTask = await User.find({
+      _id: { $in: assignedTo },
+      "tasks._id": req.params.taskId,
+    }).select("_id");
+    const usersWithTaskIds = usersWithTask.map((u) => u._id.toString());
+    const usersToAdd = assignedTo.filter(
+      (userId) => !usersWithTaskIds.includes(userId)
+    );
+
+    console.log("Users to add the task to:", usersToAdd);
+
+    for (const userId of usersToAdd) {
+      const newUser = await User.findById(userId);
+      if (newUser) {
+        newUser.tasks.push({
+          _id: req.params.taskId,
+          title,
+          description,
+          deadline: task.deadline,
+          status: "pending",
+          assignedBy: user._id,
+        });
+        await newUser.save();
+        console.log(`Task added to user ${userId}`);
+      }
+    }
+
+    await user.save();
+    res.status(200).json({ message: "Task updated successfully", task });
+  } catch (error) {
+    console.error("Error updating task:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
