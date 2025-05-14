@@ -140,7 +140,7 @@ const AdminDashboard = () => {
             />
             <div>
               <h6 className="mb-0 text-white">{user.fullName}</h6>
-              <small className="text-muted">{user.category || "admin"}</small>
+              <small className="text">{user.role || "no-category"}</small>
             </div>
           </div>
 

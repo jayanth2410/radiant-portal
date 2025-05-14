@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FaEdit } from "react-icons/fa";
+import ReactCrop from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 
 const Profile = () => {
   const [profile, setProfile] = useState({
@@ -10,42 +12,57 @@ const Profile = () => {
     phone: "",
     address: "",
     yearsOfExperience: "",
-    role: "", // New field added
+    role: "",
   });
 
   const [editField, setEditField] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [crop, setCrop] = useState({
+    unit: "%",
+    width: 50,
+    height: 50,
+    aspect: 1,
+  });
+  const [croppedImage, setCroppedImage] = useState(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageRef, setImageRef] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const response = await fetch("http://localhost:5000/api/auth/me", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include JWT token
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
 
         const data = await response.json();
         if (response.ok) {
+          console.log("[DEBUG] Fetched profile data:", {
+            fullName: data.fullName,
+            profilePicture: data.profilePicture ? "base64 string" : "null",
+          });
           setProfile({
             profilePicture:
               data.profilePicture ||
-              "https://th.bing.com/th/id/OIP.RKrPgszyZzEt38bVz8yeTQHaHa?w=177&h=180&c=7&r=0&o=5&cb=iwc2&dpr=1.3&pid=1.7", // Use hardcoded image if none exists
+              "https://th.bing.com/th/id/OIP.RKrPgszyZzEt38bVz8yeTQHaHa?w=177&h=180&c=7&r=0&o=5&cb=iwc2&dpr=1.3&pid=1.7",
             name: data.fullName,
             id: data.id,
-            dob: formatDate(data.dateOfBirth), // Format the date
+            dob: formatDate(data.dateOfBirth),
             phone: data.phone,
             address: data.address,
             yearsOfExperience: data.yearsOfExperience,
-            role: data.role, // Use category as role
+            role: data.role,
           });
         } else {
+          console.log("[DEBUG] Failed to load profile:", data.message);
           setError(data.message || "Failed to load profile data.");
         }
       } catch (err) {
-        console.error("Error fetching profile:", err);
+        console.error("[ERROR] Fetching profile:", err.message);
         setError("An error occurred while fetching profile data.");
       } finally {
         setLoading(false);
@@ -60,7 +77,7 @@ const Profile = () => {
     if (!dateString) return "";
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
@@ -70,11 +87,140 @@ const Profile = () => {
     setProfile({ ...profile, [name]: value });
   };
 
-  const handleUpdateField = async (key) => {
-    console.log("Updating field:", key, "with value:", profile[key]); // Debugging log
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      console.log("[DEBUG] File selected:", {
+        name: file.name,
+        size: file.size,
+      });
+      const reader = new FileReader();
+      reader.onload = () => {
+        setSelectedImage(reader.result);
+        setShowCropModal(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    // Map frontend keys to backend keys
-    var rightKey = key;
+  const getCroppedImg = useCallback(() => {
+    if (!imageRef || !crop.width || !crop.height) return;
+
+    const canvas = document.createElement("canvas");
+    const scaleX = imageRef.naturalWidth / imageRef.width;
+    const scaleY = imageRef.naturalHeight / imageRef.height;
+    canvas.width = crop.width * scaleX;
+    canvas.height = crop.height * scaleY;
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(
+      imageRef,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width * scaleX,
+      crop.height * scaleY
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        console.log("[DEBUG] Cropped image blob created:", { size: blob.size });
+        resolve(blob);
+      }, "image/jpeg");
+    });
+  }, [imageRef, crop]);
+
+  const handleCropComplete = async () => {
+    const croppedBlob = await getCroppedImg();
+    if (croppedBlob) {
+      const croppedUrl = URL.createObjectURL(croppedBlob);
+      console.log("[DEBUG] Cropped image URL created");
+      setCroppedImage(croppedUrl);
+      setProfile({ ...profile, profilePicture: croppedUrl });
+      setShowCropModal(false);
+    }
+  };
+
+  const handleUpdateProfilePicture = async () => {
+    if (!croppedImage) {
+      console.log("[DEBUG] No cropped image to upload");
+      setError("No cropped image to upload.");
+      return;
+    }
+    try {
+      const croppedBlob = await getCroppedImg();
+      if (!croppedBlob) return;
+
+      const formData = new FormData();
+      formData.append("profilePicture", croppedBlob, "profile.jpg");
+      console.log("[DEBUG] Sending profile picture to backend");
+
+      const response = await fetch(
+        "http://localhost:5000/api/auth/update-profile",
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+      console.log("[DEBUG] Update profile response:", {
+        ok: response.ok,
+        data,
+      });
+
+      if (response.ok) {
+        setSuccess("Profile picture updated successfully!");
+        setCroppedImage(null);
+
+        // Refresh profile data
+        const updatedProfileResponse = await fetch(
+          "http://localhost:5000/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const updatedProfileData = await updatedProfileResponse.json();
+        if (updatedProfileResponse.ok) {
+          console.log("[DEBUG] Refreshed profile data:", {
+            fullName: updatedProfileData.fullName,
+            profilePicture: updatedProfileData.profilePicture
+              ? "base64 string"
+              : "null",
+          });
+          setProfile({
+            profilePicture: updatedProfileData.profilePicture || "/",
+            name: updatedProfileData.fullName,
+            id: updatedProfileData.id,
+            dob: formatDate(updatedProfileData.dateOfBirth),
+            phone: updatedProfileData.phone,
+            address: updatedProfileData.address,
+            yearsOfExperience: updatedProfileData.yearsOfExperience,
+            role: updatedProfileData.role,
+          });
+        }
+      } else {
+        console.log("[DEBUG] Failed to update profile picture:", data.message);
+        setError(data.message || "Failed to update profile picture.");
+      }
+    } catch (err) {
+      console.error("[ERROR] Updating profile picture:", err.message);
+      setError("An error occurred while updating the profile picture.");
+    }
+  };
+
+  const handleUpdateField = async (key) => {
+    console.log("[DEBUG] Updating field:", { key, value: profile[key] });
+
+    let rightKey = key;
     if (key === "name") {
       rightKey = "fullName";
     } else if (key === "dob") {
@@ -90,18 +236,17 @@ const Profile = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ [rightKey]: profile[key] }), // Send the updated field
+          body: JSON.stringify({ [rightKey]: profile[key] }),
         }
       );
 
       const data = await response.json();
-      console.log("Response from server:", data); // Debugging log
+      console.log("[DEBUG] Update field response:", { ok: response.ok, data });
 
       if (response.ok) {
         setSuccess("Profile updated successfully!");
         setEditField(null);
 
-        // Trigger a refresh by fetching updated profile data
         const updatedProfileResponse = await fetch(
           "http://localhost:5000/api/auth/me",
           {
@@ -112,22 +257,29 @@ const Profile = () => {
         );
         const updatedProfileData = await updatedProfileResponse.json();
         if (updatedProfileResponse.ok) {
+          console.log("[DEBUG] Refreshed profile data after field update:", {
+            fullName: updatedProfileData.fullName,
+            profilePicture: updatedProfileData.profilePicture
+              ? "base64 string"
+              : "null",
+          });
           setProfile({
-            profilePicture: updatedProfileData.profilePicture || "/", // Use hardcoded image if none exists
+            profilePicture: updatedProfileData.profilePicture || "/",
             name: updatedProfileData.fullName,
             id: updatedProfileData.id,
-            dob: formatDate(updatedProfileData.dateOfBirth), // Format the date
+            dob: formatDate(updatedProfileData.dateOfBirth),
             phone: updatedProfileData.phone,
             address: updatedProfileData.address,
             yearsOfExperience: updatedProfileData.yearsOfExperience,
-            role: updatedProfileData.role, // Use category as role
+            role: updatedProfileData.role,
           });
         }
       } else {
+        console.log("[DEBUG] Failed to update field:", data.message);
         setError(data.message || "Failed to update profile.");
       }
     } catch (err) {
-      console.error("Error updating profile:", err);
+      console.error("[ERROR] Updating profile:", err.message);
       setError("An error occurred while updating the profile.");
     }
   };
@@ -205,12 +357,73 @@ const Profile = () => {
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => handleInputChange(e)}
+              onChange={handleFileChange}
               style={{ display: "none" }}
             />
           </label>
+          {croppedImage && (
+            <button
+              className="btn btn-success btn-sm ms-2"
+              onClick={handleUpdateProfilePicture}
+            >
+              Update Profile Picture
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Crop Modal */}
+      {showCropModal && (
+        <div
+          className="modal fade show"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content bg-dark text-white">
+              <div className="modal-header">
+                <h5 className="modal-title">Crop Image</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowCropModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {selectedImage && (
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(newCrop) => setCrop(newCrop)}
+                    circularCrop
+                    aspect={1}
+                  >
+                    <img
+                      src={selectedImage}
+                      alt="Crop"
+                      onLoad={(e) => setImageRef(e.currentTarget)}
+                    />
+                  </ReactCrop>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCropModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleCropComplete}
+                >
+                  Crop
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Personal Information Form */}
       <div className="card bg-dark text-white p-4">
