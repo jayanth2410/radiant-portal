@@ -6,6 +6,7 @@ import Tasks from "./Tasks";
 import ErrorBoundary from "./ErrorBoundary";
 import Profile from "./Profile";
 import defaultImage from "../assets/default-profile.jpg";
+import PromoteToAdmin from "./PromoteToAdmin";
 
 const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +34,6 @@ const AdminDashboard = () => {
         setAdminRole(user.role);
         setProfilePicture(user.profilePicture);
 
-
         if (!response.ok)
           setError(data.message || "Failed to fetch admin data");
       } catch (error) {
@@ -50,7 +50,7 @@ const AdminDashboard = () => {
           },
         });
         const data = await response.json();
-        if (response.ok) setUsers(data.users);
+        if (response.ok) setUsers(data.users || []);
         else setError(data.message || "Failed to fetch users");
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -108,6 +108,7 @@ const AdminDashboard = () => {
               setSkillFilter={setSkillFilter}
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
+              setUsers={setUsers} // Added setUsers prop
             />
           </ErrorBoundary>
         );
@@ -119,6 +120,8 @@ const AdminDashboard = () => {
         );
       case "Settings":
         return <div>Settings Page</div>;
+      case "promote-to-admin":
+        return <PromoteToAdmin />;
       default:
         return <HomePage />;
     }
@@ -308,6 +311,22 @@ const AdminDashboard = () => {
               onClick={() => setActiveSection("Settings")}
             >
               <i className="bi bi-gear me-2"></i> Settings
+            </button>
+            <button
+              className={`nav-link text-white d-flex align-items-center ${
+                activeSection === "promote-to-admin"
+                  ? "bg-dark rounded mb-2"
+                  : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
+              onClick={() => setActiveSection("promote-to-admin")}
+            >
+              <i className="bi bi-list-task me-2"></i> Promote User
             </button>
           </nav>
         </div>

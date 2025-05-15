@@ -20,7 +20,6 @@ const currentDate = new Date("2025-05-14T18:32:00+05:30");
 
 const HomePage = () => {
   const { user, refetchUser } = useContext(UserContext);
-  console.log("homepage line 23: " + JSON.stringify(user, null, 2));
 
   // State for marking/undoing task completion
   const [showConfirmComplete, setShowConfirmComplete] = useState(false);
