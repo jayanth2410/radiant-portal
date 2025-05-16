@@ -57,8 +57,13 @@ const Certification = () => {
   };
 
   return (
-    <div className="mb-5" >
-      <h2>Certifications</h2>
+    <div className="mb-5">
+      <h2
+        className="mb-4 text-white fw-bold"
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
+        Certifications
+      </h2>
 
       {/* No Certifications Placeholder */}
       {certifications.length === 0 && !showAddCertification && (
@@ -79,8 +84,6 @@ const Certification = () => {
         </div>
       )}
 
-    
-
       {/* Add Certification Button */}
       {!showAddCertification && (
         <div className="text-center mt-4" style={{ marginBottom: "2rem" }}>
@@ -96,7 +99,10 @@ const Certification = () => {
 
       {/* Add Certification Form */}
       {showAddCertification && (
-        <div className="bg-dark text-white p-4" style={{ borderRadius: "0.5rem", marginBottom: "2rem" }}>
+        <div
+          className="bg-dark text-white p-4"
+          style={{ borderRadius: "0.5rem", marginBottom: "2rem" }}
+        >
           <h2 className="text-center">Add Certification</h2>
           <div className="mb-2">
             <label htmlFor="certificationTitle" className="form-label">
@@ -184,15 +190,14 @@ const Certification = () => {
           <button
             className="btn btn-secondary ms-2"
             onClick={() => setShowAddCertification(false)}
-            style={{ width: "10rem", marginTop: "2rem"}}
+            style={{ width: "10rem", marginTop: "2rem" }}
           >
             Cancel
           </button>
         </div>
       )}
 
-
-        {/* List of Certifications */}
+      {/* List of Certifications */}
       {certifications.map((cert, index) => (
         <div
           key={index}
@@ -249,7 +254,6 @@ const Certification = () => {
           </div>
         </div>
       ))}
-
     </div>
   );
 };

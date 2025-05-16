@@ -392,7 +392,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="container py-4">
+    <div>
       <h2
         className="mb-4 text-white fw-bold"
         style={{ fontFamily: "'Poppins', sans-serif" }}

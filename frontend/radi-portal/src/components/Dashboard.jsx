@@ -4,21 +4,111 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Certification from "./Certifications";
 import Projects from "./Projects";
 import Home from "./HomePage";
-import Test from "./Home";
 import { UserContext } from "./UserContext";
 import defaultImage from "../assets/default-profile.jpg";
+import {
+  FaHome,
+  FaUser,
+  FaCertificate,
+  FaProjectDiagram,
+  FaSignOutAlt,
+} from "react-icons/fa";
+
+// Define currentDate for display
+const currentDate = new Date("2025-05-16T10:10:00+05:30");
+const formattedDate = currentDate.toLocaleString("en-IN", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Asia/Kolkata",
+});
 
 const Dashboard = () => {
-  const [activeSection, setActiveSection] = useState("Home");
-  const { user, loading } = useContext(UserContext);
+  const [activeSection, setActiveSection] = useState("Profile");
+  const { user, loading: contextLoading } = useContext(UserContext);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
-  if (loading) {
+  const [profile, setProfile] = useState({
+    profilePicture: "",
+    name: "",
+    role: "",
+  });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Set a timeout for the fetch request (10 seconds)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch("http://localhost:5000/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+        if (response.ok) {
+          setProfile({
+            profilePicture: data.profilePicture || defaultImage,
+            name: data.fullName || "User",
+            role: data.role || "Role not set",
+          });
+        } else {
+          console.error("Failed to fetch user data:", data.message);
+          setProfile({
+            profilePicture: defaultImage,
+            name: "User",
+            role: "Role not set",
+          });
+          setFetchError(data.message || "Failed to fetch user data");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setProfile({
+          profilePicture: defaultImage,
+          name: "User",
+          role: "Role not set",
+        });
+        if (error.name === "AbortError") {
+          setFetchError("Request timed out. Please try again later.");
+        } else {
+          setFetchError("Error fetching user data. Please try again.");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  if (contextLoading || isLoading) {
     return (
       <div
-        className="d-flex justify-content-center align-items-center min-vh-100"
+        className="d-flex flex-column justify-content-center align-items-center min-vh-100"
         style={{ backgroundColor: "#000", color: "#fff" }}
       >
+        <div
+          className="spinner-border mb-3"
+          role="status"
+          style={{ color: "#7c3aed" }}
+        >
+          <span className="visually-hidden">Loading...</span>
+        </div>
         <h2>Loading...</h2>
+        {fetchError && (
+          <p className="text-danger mt-3" style={{ maxWidth: "300px", textAlign: "center" }}>
+            {fetchError}
+          </p>
+        )}
       </div>
     );
   }
@@ -33,10 +123,8 @@ const Dashboard = () => {
         return <Certification />;
       case "Projects":
         return <Projects />;
-      case "Testing":
-        return <Test />;
       default:
-        return <h2>Welcome back, {user.fullName}!</h2>;
+        return <h2>Welcome back, {user?.fullName || "User"}!</h2>;
     }
   };
 
@@ -92,12 +180,12 @@ const Dashboard = () => {
               }}
             >
               <img
-                src={user?.profilePicture || defaultImage}
+                src={profile.profilePicture}
                 alt="Profile"
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "contain",
+                  objectFit: "cover",
                   borderRadius: "50%",
                   backgroundColor: "#333",
                 }}
@@ -108,48 +196,48 @@ const Dashboard = () => {
               />
             </div>
             <div
-  className="ms-3 d-flex flex-column"
-  style={{
-    flex: 1,
-    overflow: "hidden",
-  }}
->
-  <h5
-    className="mb-1 text-truncate"
-    style={{
-      fontFamily: "'Poppins', sans-serif",
-      fontWeight: 600,
-      fontSize: "1.1rem",
-      color: "#fff",
-      transition: "color 0.2s ease",
-      maxWidth: "150px",
-    }}
-    onMouseEnter={(e) => (e.target.style.color = "#7c3aed")}
-    onMouseLeave={(e) => (e.target.style.color = "#fff")}
-    title={user?.fullName || "User"}
-  >
-    {user?.fullName || "User"}
-  </h5>
-  <span
-    style={{
-      backgroundColor: "rgba(124, 58, 237, 0.1)", // Softer background for better contrast
-      border: "1px solid rgba(124, 58, 237, 0.3)", // Subtle border
-      color: "#fff",
-      fontSize: "0.6rem",
-      fontFamily: "'Roboto', sans-serif",
-      padding: "4px 8px 4px 8px", // Consistent padding, no extra left indent
-      borderRadius: "12px",
-      whiteSpace: "normal",
-      lineHeight: "1.2",
-      display: "block", // Ensure it takes the full width
-      textAlign: "left", // Explicitly left-align the text
-      width: "100%", // Span the full width of the parent
-      boxSizing: "border-box", // Include padding in width calculation
-    }}
-  >
-    {user?.role || "Role not set"}
-  </span>
-</div>
+              className="ms-3 d-flex flex-column"
+              style={{
+                flex: 1,
+                overflow: "hidden",
+              }}
+            >
+              <h5
+                className="mb-1 text-truncate"
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 600,
+                  fontSize: "1.1rem",
+                  color: "#fff",
+                  transition: "color 0.2s ease",
+                  maxWidth: "150px",
+                }}
+                onMouseEnter={(e) => (e.target.style.color = "#7c3aed")}
+                onMouseLeave={(e) => (e.target.style.color = "#fff")}
+                title={profile.name}
+              >
+                {profile.name}
+              </h5>
+              <span
+                style={{
+                  backgroundColor: "rgba(124, 58, 237, 0.1)",
+                  border: "1px solid rgba(124, 58, 237, 0.3)",
+                  color: "#fff",
+                  fontSize: "0.6rem",
+                  fontFamily: "'Roboto', sans-serif",
+                  padding: "4px 8px",
+                  borderRadius: "12px",
+                  whiteSpace: "normal",
+                  lineHeight: "1.2",
+                  display: "block",
+                  textAlign: "left",
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              >
+                {profile.role}
+              </span>
+            </div>
           </div>
 
           {/* Navigation Links */}
@@ -166,7 +254,7 @@ const Dashboard = () => {
               }}
               onClick={() => setActiveSection("Home")}
             >
-              <i className="bi bi-house-door me-2"></i> Home
+              <FaHome className="me-2" /> Home
             </button>
             <button
               className={`nav-link text-white d-flex align-items-center ${
@@ -180,7 +268,7 @@ const Dashboard = () => {
               }}
               onClick={() => setActiveSection("Profile")}
             >
-              <i className="bi bi-person me-2"></i> Profile
+              <FaUser className="me-2" /> Profile
             </button>
             <button
               className={`nav-link text-white d-flex align-items-center ${
@@ -194,7 +282,7 @@ const Dashboard = () => {
               }}
               onClick={() => setActiveSection("Certifications")}
             >
-              <i className="bi bi-award me-2"></i> Certifications
+              <FaCertificate className="me-2" /> Certifications
             </button>
             <button
               className={`nav-link text-white d-flex align-items-center ${
@@ -208,21 +296,7 @@ const Dashboard = () => {
               }}
               onClick={() => setActiveSection("Projects")}
             >
-              <i className="bi bi-kanban me-2"></i> Projects
-            </button>
-            <button
-              className={`nav-link text-white d-flex align-items-center ${
-                activeSection === "Testing" ? "bg-dark rounded mb-2" : ""
-              }`}
-              style={{
-                padding: "10px",
-                transition: "background-color 0.1s ease",
-                border: "none",
-                background: "none",
-              }}
-              onClick={() => setActiveSection("Testing")}
-            >
-              <i className="bi bi-gear me-2"></i> Testing
+              <FaProjectDiagram className="me-2" /> Projects
             </button>
           </nav>
         </div>
@@ -233,12 +307,13 @@ const Dashboard = () => {
             href="/"
             className="text-light d-flex align-items-center"
             style={{ textDecoration: "none" }}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               localStorage.removeItem("token");
               window.location.href = "/";
             }}
           >
-            <i className="bi bi-box-arrow-right me-2"></i> Logout
+            <FaSignOutAlt className="me-2" /> Logout
           </a>
         </div>
       </aside>
@@ -252,7 +327,12 @@ const Dashboard = () => {
           height: "100vh",
         }}
       >
-        <div className="d-flex justify-content-between align-items-center mb-4"></div>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="text-white">{activeSection}</h2>
+          <div className="text-muted">
+            <small>{formattedDate}</small>
+          </div>
+        </div>
         {renderContent()}
       </div>
     </div>

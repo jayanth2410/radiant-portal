@@ -73,7 +73,12 @@ const Projects = () => {
 
   return (
     <div className="mb-5">
-      <h2>Projects</h2>
+      <h2
+        className="mb-4 text-white fw-bold"
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
+        Projects
+      </h2>
       {/* Add Project Button */}
       {!showAddProject && (
         <div className="text-center mt-4" style={{ marginBottom: "2rem" }}>

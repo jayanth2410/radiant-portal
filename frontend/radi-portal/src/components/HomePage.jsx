@@ -17,7 +17,6 @@ import {
 // Define currentDate outside the component to prevent re-creation on every render
 // Current date and time: May 14, 2025, 06:32 PM IST
 const currentDate = new Date("2025-05-14T18:32:00+05:30");
-
 const HomePage = () => {
   const { user, refetchUser } = useContext(UserContext);
 
@@ -27,6 +26,10 @@ const HomePage = () => {
   const [taskToComplete, setTaskToComplete] = useState(null);
   const [taskToUndo, setTaskToUndo] = useState(null);
   const [confirmInput, setConfirmInput] = useState("");
+
+  // State for description modal
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [selectedTaskDescription, setSelectedTaskDescription] = useState("");
 
   // State for derived values
   const [pendingProjects, setPendingProjects] = useState(0);
@@ -45,6 +48,7 @@ const HomePage = () => {
       setRecentTasks([]);
       return;
     }
+
 
     const taskField = user.category === "admin" ? "tasksCreated" : "tasks";
     let tasks = user[taskField] || [];
@@ -110,6 +114,12 @@ const HomePage = () => {
     setTaskToUndo(taskId);
     setShowConfirmUndo(true);
     setConfirmInput("");
+  };
+
+  // Handle viewing task description
+  const handleViewDescription = (description) => {
+    setSelectedTaskDescription(description);
+    setShowDescriptionModal(true);
   };
 
   // Handle marking a task as completed
@@ -181,18 +191,20 @@ const HomePage = () => {
   };
 
   return (
-    <div className="flex-grow-1 mb-5">
+    <div className=" flex-grow-1 mb-5">
       <div className="d-flex align-items-center mb-3">
         <div>
-          <h3 className="text-white">
+          <h2
+            className="mb-4 text-white fw-bold"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
             Welcome back, {user?.fullName || "User"}
-          </h3>
+          </h2>
           <p className="text-info">
             Here's what's happening with your projects today.
           </p>
         </div>
       </div>
-
       {/* Top Cards */}
       <div className="row mb-4">
         <div className="col-md-3">
@@ -247,7 +259,7 @@ const HomePage = () => {
                 <div>
                   <h5>Total Tasks</h5>
                   <h3>{totalTasks}</h3>
-                  <small className="text-muted">Total assigned tasks</small>
+                  <small className="text-info">Total assigned tasks</small>
                 </div>
                 <FaTasks size={30} />
               </div>
@@ -255,7 +267,6 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-
       {/* Recent Activity as Table */}
       <div className="card bg-dark text-white" style={{ width: "100%" }}>
         <div className="card-body">
@@ -298,7 +309,18 @@ const HomePage = () => {
                           overflowWrap: "break-word",
                         }}
                       >
-                        {task.description}
+                        <button
+                          className="btn btn-outline-info btn-sm"
+                          onClick={() =>
+                            handleViewDescription(task.description)
+                          }
+                          style={{
+                            whiteSpace: "normal",
+                            overflowWrap: "break-word",
+                          }}
+                        >
+                          View Description
+                        </button>
                       </td>
                       <td
                         style={{
@@ -331,7 +353,7 @@ const HomePage = () => {
                                 overflowWrap: "break-word",
                               }}
                             >
-                              Mark as Completed
+                              Completed
                             </button>
                           ) : (
                             <button
@@ -357,7 +379,31 @@ const HomePage = () => {
           )}
         </div>
       </div>
-
+      {/* Modal for Viewing Description */}
+      {showDescriptionModal && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          tabIndex="-1"
+          role="dialog"
+        >
+          <div className="modal-dialog" role="document">
+            <div className="modal-content bg-dark text-white">
+              <div className="modal-header">
+                <h5 className="modal-title">Task Description</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowDescriptionModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>{selectedTaskDescription}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Confirmation Modal for Marking as Completed */}
       {showConfirmComplete && (
         <div
@@ -412,7 +458,6 @@ const HomePage = () => {
           </div>
         </div>
       )}
-
       {/* Confirmation Modal for Undoing Completion */}
       {showConfirmUndo && (
         <div

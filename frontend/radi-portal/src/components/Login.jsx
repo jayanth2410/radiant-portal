@@ -56,6 +56,7 @@ export default function LoginPage() {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         setUser(data.user); // ✅ set user in context
+        console.log("User data on 59 login:", data.user.category);
 
         toast.success("Login successful! Redirecting...");
         setTimeout(() => {
@@ -79,8 +80,20 @@ export default function LoginPage() {
   };
 
   return (
+    <>
+     <ToastContainer
+            position="top-right"
+            autoClose={1000}
+            hideProgressBar
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover={false}
+            theme="dark"
+          />
     <div className="login-container">
-      <ToastContainer position="top-center" autoClose={3000} />
       <div className="login-box">
         <div className="login-icon">{/* Your icon SVG here */}</div>
 
@@ -149,5 +162,6 @@ export default function LoginPage() {
         </button>
       </div>
     </div>
+    </>
   );
 }

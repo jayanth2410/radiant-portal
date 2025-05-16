@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import * as XLSX from "xlsx";
+import { toast, ToastContainer } from "react-toastify";
 
 const UserTable = ({
   users = [],
@@ -156,13 +157,20 @@ const UserTable = ({
           );
         }
 
-        alert("User deleted successfully");
+        toast.success("user deleted successfully.", {
+          autoClose: 1000,
+        });
       } catch (fetchError) {
         console.warn(
           "Failed to refetch users, using local state if available:",
           fetchError.message
         );
-        alert("User deleted successfully (local state may not be updated)");
+        toast.success(
+          "User deleted successfully (local state may not be updated)",
+          {
+            autoClose: 1000,
+          }
+        );
       }
     } catch (error) {
       console.error("Error during deletion process:", error.message);
@@ -176,6 +184,18 @@ const UserTable = ({
 
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover={false}
+        theme="dark"
+      />
       {showConfirmDelete && (
         <div
           className="modal fade show d-block"
