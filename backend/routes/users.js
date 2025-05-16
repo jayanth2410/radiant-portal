@@ -8,7 +8,7 @@ router.get("/", verifyToken, async (req, res) => {
   try {
     const users = await User.find(
       {},
-      "fullName email certifications skills yearsOfExperience"
+      "fullName email certifications skills yearsOfExperience category"
     );
     res.status(200).json({ users }); // Wrap the array in an object
   } catch (err) {

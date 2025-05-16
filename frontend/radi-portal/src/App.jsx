@@ -18,55 +18,66 @@ function App() {
   return (
     <Router>
       <ErrorBoundary>
-      <UserProvider>
-        <Routes>
-          {/* Public Route */}
-          <Route path="/" element={<Login />} />
+        <UserProvider>
+          <ToastContainer
+            position="top-right"
+            autoClose={1000}
+            hideProgressBar
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover={false}
+            theme="dark"
+          />
+          <Routes>
+            {/* Public Route */}
+            <Route path="/" element={<Login />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute>
-                <AdminPanel />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/projects"
-            element={
-              <PrivateRoute>
-                <Projects />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/certifications"
-            element={
-              <PrivateRoute>
-                <Certifications />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/home"
-            element={
-              <PrivateRoute>
-                <Home />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
-        <ToastContainer />
-      </UserProvider>
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminPanel />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <PrivateRoute>
+                  <Projects />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/certifications"
+              element={
+                <PrivateRoute>
+                  <Certifications />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/home"
+              element={
+                <PrivateRoute>
+                  <Home />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+        </UserProvider>
       </ErrorBoundary>
     </Router>
   );

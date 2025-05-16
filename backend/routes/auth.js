@@ -11,19 +11,48 @@ router.post("/signup", async (req, res) => {
   const { fullName, email, password } = req.body;
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // Validate required fields
+    if (!fullName || !email || !password) {
+      console.log("[DEBUG] Missing required fields:", {
+        fullName,
+        email,
+        password,
+      });
+      return res
+        .status(400)
+        .json({ message: "Full name, email, and password are required" });
+    }
+    console.log("check 1");
+    // Check for duplicate email
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      console.log("[DEBUG] Email already in use:", email);
+      return res.status(400).json({ message: "Email already in use" });
+    }
+    console.log("check 2");
+    // Create new user
     const user = new User({
       fullName,
       email,
-      password: hashedPassword,
+      password: password,
       category: "user", // Default to "user"
     });
-
+    console.log("check 3: ", user);
     await user.save();
-    res.status(201).json({ message: "User created successfully!" });
+    console.log("[DEBUG] User created:", { id: user._id, fullName, email });
+    console.log("check 4");
+    // Generate JWT token (example)
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || jwtSecret,
+      {
+        expiresIn: "1h",
+      }
+    );
+    console.log("check 5+ token: ", token);
+    res.status(201).json({ message: "User created successfully!", token });
   } catch (error) {
-    console.error("Error during signup:", error);
+    console.error("[ERROR] Signup error:", error.message);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -42,14 +71,14 @@ router.post("/login", async (req, res) => {
 
     // Find user by email
     const user = await User.findOne({ email });
+    console.log("User found by /login endpoint:", user); // Debugging log
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
-
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials." });
+      return res.status(400).json({ message: "Invalid credentials password" });
     }
 
     // Generate JWT token
@@ -60,12 +89,7 @@ router.post("/login", async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       token,
-      user: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        category: user.category,
-      },
+      user: user.toObject(),
     });
   } catch (err) {
     console.error("Error during login:", err);
@@ -76,35 +100,55 @@ router.post("/login", async (req, res) => {
 // Fetch User Data Route
 router.get("/me", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    console.log("[DEBUG] Fetching user data for ID:", req.user.id);
+    const user = await User.findById(req.user.id)
+      .select("-password") // Exclude password
+      .populate("tasksCreated.assignedTo", "fullName")
+      .populate("tasks.assignedBy", "fullName");
     if (!user) {
+      console.log("[DEBUG] User not found for ID:", req.user.id);
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(user);
+    const userData = user.toObject();
+    if (user.profilePicture && Buffer.isBuffer(user.profilePicture)) {
+      console.log("[DEBUG] Converting profilePicture Buffer to base64");
+      userData.profilePicture = `data:image/jpeg;base64,${user.profilePicture.toString(
+        "base64"
+      )}`;
+    } else {
+      console.log("[DEBUG] No profilePicture for user:", user._id);
+      userData.profilePicture = null;
+    }
+
+    console.log("[DEBUG] Sending user data:", {
+      id: userData.id,
+      fullName: userData.fullName,
+      profilePicture: userData.profilePicture ? "base64 string" : "null",
+    });
+    res.status(200).json(userData);
   } catch (err) {
-    console.error("Error fetching user data:", err);
+    console.error("[ERROR] Fetching user data:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // Get current user data (for both admins and users)
-router.get("/me", verifyToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id)
-      .select("-password")
-      .populate("tasksCreated.assignedTo", "fullName")
-      .populate("tasks.assignedBy", "fullName");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.status(200).json({ user });
-  } catch (error) {
-    console.error("Error fetching user data:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
+// router.get("/m", verifyToken, async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.id)
+//       .select("-password")
+//       .populate("tasksCreated.assignedTo", "fullName")
+//       .populate("tasks.assignedBy", "fullName");
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+//     res.status(200).json({ user });
+//   } catch (error) {
+//     console.error("Error fetching user data:", error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// });
 
 // Promote User to Admin Route
 router.put("/promote-to-admin/:userId", verifyToken, async (req, res) => {
@@ -152,6 +196,7 @@ router.put(
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Handle profile picture
       if (req.file) {
         console.log("[DEBUG] Profile picture uploaded:", {
           size: req.file.size,
@@ -160,6 +205,7 @@ router.put(
         user.profilePicture = req.file.buffer;
       }
 
+      // Update fields
       const updates = req.body;
       console.log("[DEBUG] Update fields received:", updates);
 
@@ -170,14 +216,20 @@ router.put(
       if (updates.yearsOfExperience)
         user.yearsOfExperience = updates.yearsOfExperience;
       if (updates.role) user.role = updates.role;
+      if (updates.bloodGroup) user.bloodGroup = updates.bloodGroup;
+      if (updates.emergencyContact)
+        user.emergencyContact = updates.emergencyContact;
+      if (updates.personalEmail) user.personalEmail = updates.personalEmail;
+      if (updates.id) user.id = updates.id;
 
       await user.save();
       console.log("[DEBUG] User updated successfully:", {
-        id: user.id,
+        id: user._id,
         fullName: user.fullName,
         hasProfilePicture: !!user.profilePicture,
       });
 
+      // Prepare response
       const updatedUser = user.toObject();
       if (user.profilePicture) {
         console.log(
@@ -219,7 +271,6 @@ router.get("/admin", verifyToken, async (req, res) => {
     if (user.category !== "admin") {
       return res.status(403).json({ message: "Access denied. Admins only." });
     }
-
     res.status(200).json({ user });
   } catch (error) {
     console.error("Error fetching admin data:", error);

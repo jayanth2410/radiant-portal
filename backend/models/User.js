@@ -3,56 +3,63 @@ const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
   profilePicture: {
-    type: Buffer, // Store the image as binary data
-    default: null, // No image by default
-  }, // Updated profilePicture field to store binary data
-  
-  fullName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  id: { type: String, unique: true },
-  dateOfBirth: { type: Date, required: true },
-  phone: { type: String, required: true },
-  role: { type: String, default: "not-set" },
-  address: { type: String, required: true },
-  yearsOfExperience: { type: Number, required: true },
+    type: Buffer,
+    default: null,
+  },
+  fullName: { type: String, required: true }, // No default, provided in signup
+  email: { type: String, required: true, unique: true }, // No default, provided in signup
+  password: { type: String, required: true }, // No default, provided in signup
+  id: { type: String, default: "not-set" }, // Non-unique, default "not-set"
+  dateOfBirth: { type: Date, default: null }, // Optional, default null
+  phone: { type: String, default: "not-set" }, // Optional, default "not-set"
+  role: { type: String, default: "not-set" }, // Already has default "not-set"
+  address: { type: String, default: "not-set" }, // Optional, default "not-set"
+  yearsOfExperience: { type: Number, default: 0 }, // Optional, default 0
   category: {
     type: String,
     required: true,
     enum: ["user", "admin"],
     default: "user",
+  }, // Already has default "user"
+  projects: { type: [String], default: [] }, // Default empty array
+  certifications: { type: [String], default: [] }, // Default empty array
+  skills: { type: [String], default: [] }, // Default empty array
+  bloodGroup: { type: String, default: "not-set" }, // Optional, default "not-set"
+  emergencyContact: { type: String, default: "not-set" }, // Optional, default "not-set"
+  personalEmail: { type: String, default: "not-set" }, // Optional, default "not-set"
+  tasksCreated: {
+    type: [
+      {
+        title: { type: String, default: "not-set" },
+        description: { type: String, default: "not-set" },
+        deadline: { type: Date, default: null },
+        assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
+        assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        status: {
+          type: String,
+          enum: ["pending", "completed", "completed after deadline"],
+          default: "pending",
+        },
+      },
+    ],
+    default: [],
   },
-  projects: [{ type: String }],
-  certifications: [{ type: String }],
-  skills: [{ type: String }], // Added skills field
-  // ... other fields
-  tasksCreated: [
-    {
-      title: { type: String },
-      description: { type: String },
-      deadline: { type: Date },
-      assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-      assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      status: {
-        type: String,
-        enum: ["pending", "completed", "completed after deadline"],
-        default: "pending",
+  tasks: {
+    type: [
+      {
+        title: { type: String, default: "not-set" },
+        description: { type: String, default: "not-set" },
+        deadline: { type: Date, default: null },
+        assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        status: {
+          type: String,
+          enum: ["pending", "completed", "completed after deadline"],
+          default: "pending",
+        },
       },
-    },
-  ],
-  tasks: [
-    {
-      title: { type: String },
-      description: { type: String },
-      deadline: { type: Date },
-      assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      status: {
-        type: String,
-        enum: ["pending", "completed", "completed after deadline"],
-        default: "pending",
-      },
-    },
-  ],
+    ],
+    default: [],
+  },
 });
 
 userSchema.pre("save", async function (next) {
