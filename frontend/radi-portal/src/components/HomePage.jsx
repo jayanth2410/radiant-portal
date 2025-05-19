@@ -279,7 +279,8 @@ const HomePage = () => {
             className="mb-4 text-white fw-bold"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
-            Welcome back, {user?.fullName || "User"}
+            <i class="bi bi-person-raised-hand"></i> Welcome back,{" "}
+            {user?.fullName || "User"}
           </h2>
           <p className="text-info">{welcomeMessage}</p>
         </div>

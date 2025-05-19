@@ -8,3 +8,6 @@ input:focus::placeholder {
   opacity: 1; /* Ensure the placeholder is fully visible */
 }
 
+.form-control.bg-dark::placeholder {
+  color: var(--placeholder-color, #a1a1aa);
+}

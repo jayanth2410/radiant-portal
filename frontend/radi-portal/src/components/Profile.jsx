@@ -407,6 +407,7 @@ const Profile = () => {
         className="mb-4 text-white fw-bold"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
+        <i class="bi bi-person-fill"></i>
         My Profile
       </h2>
 

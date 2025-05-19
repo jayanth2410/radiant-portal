@@ -13,7 +13,7 @@ const UserTable = ({
   setSkillFilter,
   currentPage,
   setCurrentPage,
-  setUsers, // Expected to be a function
+  setUsers,
 }) => {
   const usersPerPage = 10;
 
@@ -21,16 +21,28 @@ const UserTable = ({
   const [userToDelete, setUserToDelete] = useState(null);
   const [confirmInput, setConfirmInput] = useState("");
 
+  // Derive skills from certifications.skillsObtained
+  const getUserSkills = (user) => {
+    return (
+      user.certifications?.reduce((skills, cert) => {
+        return [...skills, ...(cert.skillsObtained || [])];
+      }, []) || []
+    );
+  };
+
   // Filter users based on search term, certifications, and skills
   const filteredUsers = users.filter((user) => {
-    if(user.category === "admin") return false; // Skip admin users
+    if (user.category === "admin") return false; // Skip admin users
+    const userSkills = getUserSkills(user);
     return (
       user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (certificationFilter
-        ? user.certifications?.includes(certificationFilter)
+        ? user.certifications?.some((cert) =>
+            cert.title.toLowerCase().includes(certificationFilter.toLowerCase())
+          )
         : true) &&
       (skillFilter
-        ? user.skills?.some((skill) =>
+        ? userSkills.some((skill) =>
             skill.toLowerCase().includes(skillFilter.toLowerCase())
           )
         : true)
@@ -54,8 +66,9 @@ const UserTable = ({
     const data = filteredUsers.map((user) => ({
       Name: user.fullName,
       Email: user.email,
-      Certifications: user.certifications?.join(", ") || "N/A",
-      Skills: user.skills?.join(", ") || "N/A",
+      Certifications:
+        user.certifications?.map((cert) => cert.title).join(", ") || "N/A",
+      Skills: getUserSkills(user).join(", ") || "N/A",
       "Years of Experience": user.yearsOfExperience || "N/A",
     }));
 
@@ -80,7 +93,6 @@ const UserTable = ({
     if (!userToDelete) return;
 
     try {
-      // DELETE request
       const deleteResponse = await fetch(
         `http://localhost:5000/api/users/${userToDelete._id}`,
         {
@@ -99,7 +111,6 @@ const UserTable = ({
         );
       }
 
-      // Optimistically update state locally if setUsers is available
       if (typeof setUsers === "function") {
         const updatedUsers = users.filter(
           (user) => user._id !== userToDelete._id
@@ -110,7 +121,6 @@ const UserTable = ({
         console.warn("setUsers is not a function, skipping local state update");
       }
 
-      // Refetch users to ensure sync with backend
       try {
         const updatedUsersResponse = await fetch(
           "http://localhost:5000/api/users",
@@ -132,18 +142,17 @@ const UserTable = ({
         }
 
         const updatedUsersData = await updatedUsersResponse.json();
-        console.log("Refetched users data:", updatedUsersData); // Debug log
+        console.log("Refetched users data:", updatedUsersData);
 
-        // Handle different response formats
         let newUsers = updatedUsersData;
         if (!Array.isArray(updatedUsersData)) {
           if (updatedUsersData.users && Array.isArray(updatedUsersData.users)) {
-            newUsers = updatedUsersData.users; // Handle { users: [...] }
+            newUsers = updatedUsersData.users;
           } else if (
             updatedUsersData.data &&
             Array.isArray(updatedUsersData.data)
           ) {
-            newUsers = updatedUsersData.data; // Handle { data: [...] }
+            newUsers = updatedUsersData.data;
           } else {
             console.warn("Unexpected response format, skipping state update");
             newUsers = users.filter((user) => user._id !== userToDelete._id);
@@ -158,8 +167,9 @@ const UserTable = ({
           );
         }
 
-        toast.success("user deleted successfully.", {
+        toast.success("User deleted successfully.", {
           autoClose: 1000,
+          theme: "dark",
         });
       } catch (fetchError) {
         console.warn(
@@ -170,6 +180,7 @@ const UserTable = ({
           "User deleted successfully (local state may not be updated)",
           {
             autoClose: 1000,
+            theme: "dark",
           }
         );
       }
@@ -264,7 +275,7 @@ const UserTable = ({
         <div className="col-md-4">
           <input
             type="text"
-            className="form-control"
+            className="form-control bg-dark text-white"
             placeholder="Search by Name"
             value={searchTerm}
             onChange={(e) => {
@@ -274,36 +285,29 @@ const UserTable = ({
           />
         </div>
         <div className="col-md-4">
-          <select
-            className="form-select"
+          <input
+            type="text"
+            className="form-control bg-dark text-white"
+            placeholder="Search by Certification"
             value={certificationFilter}
             onChange={(e) => {
               setCertificationFilter(e.target.value);
               setCurrentPage(1);
             }}
-          >
-            <option value="">Filter by Certification</option>
-            <option value="AWS">AWS</option>
-            <option value="GCP">GCP</option>
-          </select>
+          />
         </div>
         <div className="col-md-4">
-          <select
-            className="form-select"
+          <input
+            type="text"
+            className="form-control bg-dark text-white"
+            placeholder="Search by Skill"
             value={skillFilter}
             onChange={(e) => {
               setSkillFilter(e.target.value);
               setCurrentPage(1);
             }}
-          >
-            <option value="">Filter by Skill</option>
-            <option value="Python">Python</option>
-            <option value="JavaScript">JavaScript</option>
-            <option value="Java">Java</option>
-            <option value="SQL">SQL</option>
-            <option value="Cloud">Cloud</option>
-            <option value="DevOps">DevOps</option>
-          </select>
+          />
+
         </div>
       </div>
 
@@ -315,73 +319,70 @@ const UserTable = ({
                 <th>USER</th>
                 <th>CERTIFICATIONS</th>
                 <th>SKILLS</th>
-                <th>YEARS OF EXPERIENCE</th>
+                <th>EXPERIENCE</th>
                 <th>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {currentUsers.length > 0 ? (
-                currentUsers.map((user) => (
-                  <tr key={user._id}>
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <FaUserCircle size={32} className="me-2" />
-                        <div>
-                          <div className="fw-bold">{user.fullName}</div>
-                          <div className="text small">{user.email}</div>
+                currentUsers.map((user) => {
+                  const userSkills = getUserSkills(user);
+                  return (
+                    <tr key={user._id}>
+                      <td>
+                        <div className="d-flex align-items-center">
+                          <FaUserCircle size={32} className="me-2" />
+                          <div>
+                            <div className="fw-bold">{user.fullName}</div>
+                            <div className="text small">{user.email}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      {user.certifications?.length > 0 ? (
-                        user.certifications.map((cert, index) => (
-                          <span key={index} className="badge bg-primary me-1">
-                            {cert}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text">No certifications</span>
-                      )}
-                    </td>
-                    <td>
-                      {user.skills?.length > 0 ? (
-                        user.skills.map((skill, index) => (
-                          <span
-                            key={index}
-                            className={`badge me-1 ${
-                              skill.toLowerCase().includes("python")
-                                ? "bg-purple"
-                                : skill.toLowerCase().includes("javascript")
-                                ? "bg-warning text-dark"
-                                : "bg-secondary"
-                            }`}
-                          >
-                            {skill}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text">None</span>
-                      )}
-                    </td>
-                    <td className="fw-bold">
-                      {user.yearsOfExperience || "N/A"}
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-outline-light btn-sm me-2"
-                        disabled
-                      >
-                        <i className="bi bi-pencil"></i>
-                      </button>
-                      <button
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={() => handleDeleteClick(user)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td>
+                        {user.certifications?.length > 0 ? (
+                          user.certifications.map((cert, index) => (
+                            <span key={index} className="badge bg-primary me-1">
+                              {cert.title}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text">No certifications</span>
+                        )}
+                      </td>
+                      <td>
+                        {userSkills.length > 0 ? (
+                          userSkills.map((skill, index) => (
+                            <span
+                              key={index}
+                              className={"badge bg-secondary me-1"}
+                            >
+                              {skill}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text">None</span>
+                        )}
+                      </td>
+                      <td className="fw-bold">
+                        {user.yearsOfExperience || "N/A"}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-outline-light btn-sm me-2"
+                          disabled
+                        >
+                          <i className="bi bi-pencil"></i>
+                        </button>
+                        <button
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={() => handleDeleteClick(user)}
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="5" className="text-center">

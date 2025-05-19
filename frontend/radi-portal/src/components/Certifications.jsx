@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 const Certification = () => {
   const [certifications, setCertifications] = useState([]);
@@ -23,17 +23,26 @@ const Certification = () => {
 
   const fetchCertifications = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/certifications", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      console.log("[DEBUG] Fetched certifications:", response.data.certifications.length);
+      const response = await axios.get(
+        "http://localhost:5000/api/certifications",
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      console.log(
+        "[DEBUG] Fetched certifications:",
+        response.data.certifications.length
+      );
       setCertifications(response.data.certifications || []);
     } catch (error) {
       console.error("[ERROR] Fetching certifications:", error.message);
-      toast.error(error.response?.data?.message || "Failed to fetch certifications", {
-        autoClose: 1000,
-        theme: "dark",
-      });
+      toast.error(
+        error.response?.data?.message || "Failed to fetch certifications",
+        {
+          autoClose: 1000,
+          theme: "dark",
+        }
+      );
     }
   };
 
@@ -52,9 +61,16 @@ const Certification = () => {
       const formData = new FormData();
       formData.append("title", newCertification.title);
       formData.append("duration", newCertification.duration);
-      formData.append("skillsObtained", JSON.stringify(newCertification.skillsObtained));
+      formData.append(
+        "skillsObtained",
+        JSON.stringify(newCertification.skillsObtained)
+      );
       if (newCertification.certificateImage) {
-        formData.append("certificateImage", newCertification.certificateImage, "certificate.jpg");
+        formData.append(
+          "certificateImage",
+          newCertification.certificateImage,
+          "certificate.jpg"
+        );
       }
 
       let response;
@@ -71,9 +87,11 @@ const Certification = () => {
             },
           }
         );
-        setCertifications(certifications.map((cert) =>
-          cert._id === editId ? response.data.certification : cert
-        ));
+        setCertifications(
+          certifications.map((cert) =>
+            cert._id === editId ? response.data.certification : cert
+          )
+        );
         toast.success("Certification updated successfully!", {
           autoClose: 1000,
           theme: "dark",
@@ -101,17 +119,22 @@ const Certification = () => {
       resetForm();
     } catch (error) {
       console.error("[ERROR] Saving certification:", error.message);
-      toast.error(error.response?.data?.message || "Failed to save certification", {
-        autoClose: 1000,
-        theme: "dark",
-      });
+      toast.error(
+        error.response?.data?.message || "Failed to save certification",
+        {
+          autoClose: 1000,
+          theme: "dark",
+        }
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteCertification = async (certId, title) => {
-    const confirmation = prompt(`To delete the certification, type its name: "${title}"`);
+    const confirmation = prompt(
+      `To delete the certification, type its name: "${title}"`
+    );
     if (confirmation !== title) {
       console.log("[DEBUG] Deletion canceled: Name mismatch");
       toast.error("Certification name did not match. Deletion canceled.", {
@@ -133,10 +156,13 @@ const Certification = () => {
       });
     } catch (error) {
       console.error("[ERROR] Deleting certification:", error.message);
-      toast.error(error.response?.data?.message || "Failed to delete certification", {
-        autoClose: 1000,
-        theme: "dark",
-      });
+      toast.error(
+        error.response?.data?.message || "Failed to delete certification",
+        {
+          autoClose: 1000,
+          theme: "dark",
+        }
+      );
     }
   };
 
@@ -147,7 +173,9 @@ const Certification = () => {
       duration: cert.duration,
       skillsObtained: cert.skillsObtained,
       certificateImage: null,
-      imagePreview: cert.certificateImage ? `data:image/jpeg;base64,${cert.certificateImage}` : null,
+      imagePreview: cert.certificateImage
+        ? `data:image/jpeg;base64,${cert.certificateImage}`
+        : null,
     });
     setEditId(cert._id);
     setShowModal(true);
@@ -166,7 +194,9 @@ const Certification = () => {
   const handleRemoveSkill = (index) => {
     setNewCertification({
       ...newCertification,
-      skillsObtained: newCertification.skillsObtained.filter((_, i) => i !== index),
+      skillsObtained: newCertification.skillsObtained.filter(
+        (_, i) => i !== index
+      ),
     });
   };
 
@@ -205,8 +235,23 @@ const Certification = () => {
 
   return (
     <div className="container">
-      <h2 className="mb-4 text-white fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }}>
-        Certifications
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover={false}
+        theme="dark"
+      />
+      <h2
+        className="mb-4 text-white fw-bold"
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
+        <i class="bi bi-patch-check-fill"></i> Certifications
       </h2>
 
       {/* Add Certification Button */}
@@ -224,9 +269,16 @@ const Certification = () => {
       {certifications.length === 0 && (
         <div
           className="d-flex flex-column align-items-center justify-content-center text-white"
-          style={{ backgroundColor: "#333", borderRadius: "10px", padding: "3rem" }}
+          style={{
+            backgroundColor: "#333",
+            borderRadius: "10px",
+            padding: "3rem",
+          }}
         >
-          <i className="bi bi-file-earmark-text" style={{ fontSize: "3rem", color: "#7c3aed" }}></i>
+          <i
+            className="bi bi-file-earmark-text"
+            style={{ fontSize: "3rem", color: "#7c3aed" }}
+          ></i>
           <p className="mt-3">No certifications added yet.</p>
         </div>
       )}
@@ -235,7 +287,10 @@ const Certification = () => {
       <div className="row">
         {certifications.map((cert) => (
           <div key={cert._id} className="col-md-6 col-lg-4 mb-4">
-            <div className="card bg-dark text-white h-100" style={{ borderRadius: "10px" }}>
+            <div
+              className="card bg-dark text-white h-100"
+              style={{ borderRadius: "10px" }}
+            >
               {cert.certificateImage && (
                 <img
                   src={`data:image/jpeg;base64,${cert.certificateImage}`}
@@ -249,8 +304,12 @@ const Certification = () => {
                     borderTopRightRadius: "10px",
                   }}
                   onError={(e) => {
-                    console.log("[DEBUG] Image failed to load:", cert.certificateImage);
-                    e.target.src = "https://via.placeholder.com/300x200?text=Error";
+                    console.log(
+                      "[DEBUG] Image failed to load:",
+                      cert.certificateImage
+                    );
+                    e.target.src =
+                      "https://via.placeholder.com/300x200?text=Error";
                   }}
                 />
               )}
@@ -259,7 +318,9 @@ const Certification = () => {
                 <p className="card-text text">Duration: {cert.duration}</p>
                 <div className="d-flex flex-wrap gap-2">
                   {cert.skillsObtained.map((skill, index) => (
-                    <span key={index} className="badge bg-primary">{skill}</span>
+                    <span key={index} className="badge bg-primary">
+                      {skill}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -272,7 +333,9 @@ const Certification = () => {
                 </button>
                 <button
                   className="btn btn-sm btn-danger"
-                  onClick={() => handleDeleteCertification(cert._id, cert.title)}
+                  onClick={() =>
+                    handleDeleteCertification(cert._id, cert.title)
+                  }
                 >
                   <i className="bi bi-trash"></i> Delete
                 </button>
@@ -284,42 +347,62 @@ const Certification = () => {
 
       {/* Modal for Add/Edit Certification */}
       {showModal && (
-        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content bg-dark text-white">
               <div className="modal-header">
-                <h5 className="modal-title">{editId ? "Edit Certification" : "Add Certification"}</h5>
-                <button className="btn-close btn-close-white" onClick={resetForm}></button>
+                <h5 className="modal-title">
+                  {editId ? "Edit Certification" : "Add Certification"}
+                </h5>
+                <button
+                  className="btn-close btn-close-white"
+                  onClick={resetForm}
+                ></button>
               </div>
               <div className="modal-body">
                 <div className="mb-3">
-                  <label htmlFor="certTitle" className="form-label">Title</label>
+                  <label htmlFor="certTitle" className="form-label">
+                    Title
+                  </label>
                   <input
                     id="certTitle"
                     type="text"
                     className="form-control bg-dark text-white"
                     value={newCertification.title}
                     onChange={(e) =>
-                      setNewCertification({ ...newCertification, title: e.target.value })
+                      setNewCertification({
+                        ...newCertification,
+                        title: e.target.value,
+                      })
                     }
                     placeholder="e.g., Java Certification"
                   />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="certDuration" className="form-label">Duration</label>
+                  <label htmlFor="certDuration" className="form-label">
+                    Duration
+                  </label>
                   <input
                     id="certDuration"
                     type="text"
                     className="form-control bg-dark text-white"
                     value={newCertification.duration}
                     onChange={(e) =>
-                      setNewCertification({ ...newCertification, duration: e.target.value })
+                      setNewCertification({
+                        ...newCertification,
+                        duration: e.target.value,
+                      })
                     }
                     placeholder="e.g., 2 months"
                   />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="certImage" className="form-label">Certificate Image</label>
+                  <label htmlFor="certImage" className="form-label">
+                    Certificate Image
+                  </label>
                   <input
                     id="certImage"
                     type="file"
@@ -342,7 +425,9 @@ const Certification = () => {
                   )}
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="certSkill" className="form-label">Skills Obtained</label>
+                  <label htmlFor="certSkill" className="form-label">
+                    Skills Obtained
+                  </label>
                   <div className="input-group">
                     <input
                       id="certSkill"
@@ -352,13 +437,19 @@ const Certification = () => {
                       onChange={(e) => setNewSkill(e.target.value)}
                       placeholder="e.g., Java"
                     />
-                    <button className="btn btn-primary" onClick={handleAddSkill}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleAddSkill}
+                    >
                       Add
                     </button>
                   </div>
                   <div className="d-flex flex-wrap gap-2 mt-2">
                     {newCertification.skillsObtained.map((skill, index) => (
-                      <span key={index} className="badge bg-secondary d-flex align-items-center">
+                      <span
+                        key={index}
+                        className="badge bg-secondary d-flex align-items-center"
+                      >
                         {skill}
                         <button
                           className="btn-close btn-close-white ms-2"

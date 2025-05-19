@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -16,6 +17,8 @@ const Projects = () => {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
+  // State to track "Read More" toggle for each project
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
   // Fetch projects on mount
   useEffect(() => {
@@ -66,7 +69,6 @@ const Projects = () => {
 
       let response;
       if (editId) {
-        // Update project
         console.log("[DEBUG] Updating project:", { projectId: editId });
         response = await axios.put(
           `http://localhost:5000/api/projects/${editId}`,
@@ -82,13 +84,11 @@ const Projects = () => {
             proj._id === editId ? response.data.project : proj
           )
         );
-
         toast.success("Project updated successfully!", {
           autoClose: 1000,
-          // theme: "dark",
+          theme: "dark",
         });
       } else {
-        // Create project
         console.log("[DEBUG] Creating new project");
         response = await axios.post(
           `http://localhost:5000/api/projects`,
@@ -151,7 +151,7 @@ const Projects = () => {
   };
 
   const handleEditProject = (proj) => {
-    console.log("[DEBUG] Editing project:", { projectId: proj._id });
+    console.log("[DEBUG] ureactjs copyediting project:", { projectId: proj._id });
     setNewProject({
       title: proj.title,
       myRole: proj.myRole,
@@ -195,13 +195,45 @@ const Projects = () => {
     setShowModal(false);
   };
 
+  // Toggle "Read More" for a specific project
+  const toggleDescription = (projectId) => {
+    setExpandedDescriptions((prev) => ({
+      ...prev,
+      [projectId]: !prev[projectId],
+    }));
+  };
+
+  // Truncate description if longer than 150 characters
+  const truncateDescription = (description, projectId) => {
+    const limit = 150;
+    if (description.length <= limit || expandedDescriptions[projectId]) {
+      return description;
+    }
+    return (
+      <>
+        {description.substring(0, limit)}...
+        <button
+          className="btn btn-link p-0 ms-1 text-info"
+          style={{
+            fontFamily: "'Roboto', sans-serif",
+            fontSize: "0.9rem",
+            textDecoration: "none",
+          }}
+          onClick={() => toggleDescription(projectId)}
+        >
+          Read More <i className="bi bi-chevron-down"></i>
+        </button>
+      </>
+    );
+  };
+
   return (
     <div className="container">
       <h2
         className="mb-4 text-white fw-bold"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
-        Projects
+        <i className="bi bi-briefcase me-2"></i>Projects
       </h2>
       <ToastContainer
         position="top-right"
@@ -296,6 +328,7 @@ const Projects = () => {
                     fontSize: "2rem",
                   }}
                 >
+                  <i className="bi bi-code-slash me-2"></i>
                   {proj.title}
                 </h5>
                 <p
@@ -307,6 +340,7 @@ const Projects = () => {
                     color: "#e2e8f0",
                   }}
                 >
+                  <i className="bi bi-person-circle me-2 text-warning"></i>
                   {proj.myRole}
                 </p>
                 <h6
@@ -318,7 +352,7 @@ const Projects = () => {
                     color: "#e2e8f0",
                   }}
                 >
-                  Date Range
+                  <i className="bi bi-calendar3 me-2 text-warning"></i>Date Range
                 </h6>
                 <p
                   className="card-text"
@@ -343,7 +377,7 @@ const Projects = () => {
                     color: "#e2e8f0",
                   }}
                 >
-                  Project Details
+                  <i className="bi bi-file-text me-2 text-warning"></i>Project Details
                 </h6>
                 <p
                   className="card-text"
@@ -354,7 +388,20 @@ const Projects = () => {
                     color: "#e2e8f0",
                   }}
                 >
-                  {proj.description}
+                  {truncateDescription(proj.description, proj._id)}
+                  {expandedDescriptions[proj._id] && (
+                    <button
+                      className="btn btn-link p-0 ms-1 text-info"
+                      style={{
+                        fontFamily: "'Roboto', sans-serif",
+                        fontSize: "0.9rem",
+                        textDecoration: "none",
+                      }}
+                      onClick={() => toggleDescription(proj._id)}
+                    >
+                      Read Less <i className="bi bi-chevron-up"></i>
+                    </button>
+                  )}
                 </p>
                 <h6
                   className="mt-3"
@@ -365,7 +412,7 @@ const Projects = () => {
                     color: "#e2e8f0",
                   }}
                 >
-                  Technologies Used
+                  <i className="bi bi-tools me-2 text-warning"></i>Technologies Used
                 </h6>
                 <div className="d-flex flex-wrap gap-2">
                   {proj.techUsed.map((tech, index) => (
@@ -381,6 +428,7 @@ const Projects = () => {
                         borderRadius: "6px",
                       }}
                     >
+                      <i className="bi bi-gear-fill me-1"></i>
                       {tech}
                     </span>
                   ))}
@@ -458,6 +506,11 @@ const Projects = () => {
                     color: "#ffffff",
                   }}
                 >
+                  <i
+                    className={`bi bi-${
+                      editId ? "pencil-square" : "plus-circle"
+                    } me-2`}
+                  ></i>
                   {editId ? "Edit Project" : "Add Project"}
                 </h5>
                 <button
@@ -477,7 +530,7 @@ const Projects = () => {
                       color: "#e2e8f0",
                     }}
                   >
-                    Title
+                    <i className="bi bi-type me-2"></i>Title
                   </label>
                   <input
                     id="projTitle"
@@ -508,7 +561,7 @@ const Projects = () => {
                       color: "#e2e8f0",
                     }}
                   >
-                    Role
+                    <i className="bi bi-person-circle me-2"></i>Role
                   </label>
                   <input
                     id="projRole"
@@ -539,7 +592,7 @@ const Projects = () => {
                       color: "#e2e8f0",
                     }}
                   >
-                    Project Details
+                    <i className="bi bi-file-text me-2"></i>Project Details
                   </label>
                   <textarea
                     id="projDescription"
@@ -572,7 +625,7 @@ const Projects = () => {
                       color: "#e2e8f0",
                     }}
                   >
-                    Date Range
+                    <i className="bi bi-calendar3 me-2"></i>Date Range
                   </label>
                   <input
                     id="projStartDate"
@@ -605,7 +658,8 @@ const Projects = () => {
                       color: "#e2e8f0",
                     }}
                   >
-                    End Date (Optional)
+                    <i className="bi bi-calendar-check me-2"></i>End Date
+                    (Optional)
                   </label>
                   <input
                     id="projEndDate"
@@ -635,7 +689,7 @@ const Projects = () => {
                       color: "#e2e8f0",
                     }}
                   >
-                    Technologies Used
+                    <i className="bi bi-tools me-2"></i>Technologies Used
                   </label>
                   <div className="input-group">
                     <input
@@ -671,7 +725,7 @@ const Projects = () => {
                       }
                       onClick={handleAddTech}
                     >
-                      Add
+                      <i className="bi bi-plus-circle me-1"></i>Add
                     </button>
                   </div>
                   <div className="d-flex flex-wrap gap-2 mt-2">
@@ -688,6 +742,7 @@ const Projects = () => {
                           borderRadius: "6px",
                         }}
                       >
+                        <i className="bi bi-gear-fill me-1"></i>
                         {tech}
                         <button
                           className="btn-close btn-close-white ms-2"
@@ -719,7 +774,7 @@ const Projects = () => {
                   onClick={resetForm}
                   disabled={loading}
                 >
-                  Cancel
+                  <i className="bi bi-x-circle me-1"></i>Cancel
                 </button>
                 <button
                   className="btn btn-sm px-3 py-1"
@@ -740,6 +795,11 @@ const Projects = () => {
                   onClick={handleAddOrUpdateProject}
                   disabled={loading}
                 >
+                  <i
+                    className={`bi bi-${
+                      loading ? "arrow-repeat" : "check-circle"
+                    } me-1`}
+                  ></i>
                   {loading ? "Saving..." : editId ? "Update" : "Add"}
                 </button>
               </div>
