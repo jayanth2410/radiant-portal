@@ -323,7 +323,7 @@ const UserTable = ({
                 <th>ACTIONS</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody> 
               {currentUsers.length > 0 ? (
                 currentUsers.map((user) => {
                   const userSkills = getUserSkills(user);
