@@ -20,7 +20,7 @@ const Profile = () => {
     yearsOfExperience: "",
   });
 
-  const [editField, setEditField] = useState(null);
+  const [isEditing, setIsEditing] = useState(false); // New state for edit mode
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
@@ -38,15 +38,15 @@ const Profile = () => {
 
   // Define field order and display labels
   const fieldOrder = [
-    { key: "id", label: "ID" },
-    { key: "role", label: "Role" },
-    { key: "dob", label: "Date of Birth" },
-    { key: "phone", label: "Phone" },
-    { key: "personalEmail", label: "Personal Email" },
-    { key: "emergencyContact", label: "Emergency Contact" },
-    { key: "bloodGroup", label: "Blood Group" },
-    { key: "address", label: "Address" },
-    { key: "yearsOfExperience", label: "Years of Experience" },
+    { key: "id", label: "ID", type: "text" },
+    { key: "role", label: "Role", type: "text" },
+    { key: "dob", label: "Date of Birth", type: "date" },
+    { key: "phone", label: "Phone", type: "text" },
+    { key: "personalEmail", label: "Personal Email", type: "email" },
+    { key: "emergencyContact", label: "Emergency Contact", type: "text" },
+    { key: "bloodGroup", label: "Blood Group", type: "text" },
+    { key: "address", label: "Address", type: "text" },
+    { key: "yearsOfExperience", label: "Years of Experience", type: "number" },
   ];
 
   useEffect(() => {
@@ -103,7 +103,7 @@ const Profile = () => {
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    return `${year}-${month}-${day}`; // Changed to YYYY-MM-DD for input type="date"
   };
 
   const handleInputChange = (e) => {
@@ -241,8 +241,7 @@ const Profile = () => {
               : "null",
           });
           setProfile({
-            profilePicture:
-              updatedProfileData.profilePicture || defaultProfile,
+            profilePicture: updatedProfileData.profilePicture || defaultProfile,
             name: updatedProfileData.fullName,
             id: updatedProfileData.id || "not-set",
             role: updatedProfileData.role || "not-set",
@@ -267,17 +266,28 @@ const Profile = () => {
     }
   };
 
-  const handleUpdateField = async (key) => {
-    console.log("[DEBUG] Updating field:", { key, value: profile[key] });
-
-    let rightKey = key;
-    if (key === "name") {
-      rightKey = "fullName";
-    } else if (key === "dob") {
-      rightKey = "dateOfBirth";
-    }
+  const handleUpdateProfile = async () => {
+    console.log("[DEBUG] Updating profile with fields:", profile);
 
     try {
+      const updates = {
+        fullName: profile.name,
+        dateOfBirth: profile.dob ? new Date(profile.dob).toISOString() : null,
+        phone: profile.phone,
+        personalEmail: profile.personalEmail,
+        emergencyContact: profile.emergencyContact,
+        bloodGroup: profile.bloodGroup,
+        address: profile.address,
+        yearsOfExperience: profile.yearsOfExperience,
+        role: profile.role,
+        id: profile.id,
+      };
+
+      // Remove null or unchanged fields
+      Object.keys(updates).forEach(
+        (key) => updates[key] == null && delete updates[key]
+      );
+
       const response = await fetch(
         "http://localhost:5000/api/auth/update-profile",
         {
@@ -286,18 +296,18 @@ const Profile = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ [rightKey]: profile[key] }),
+          body: JSON.stringify(updates),
         }
       );
 
       const data = await response.json();
-      console.log("[DEBUG] Update field response:", { ok: response.ok, data });
+      console.log("[DEBUG] Update profile response:", { ok: response.ok, data });
 
       if (response.ok) {
         toast.success("Profile updated successfully!", {
           autoClose: 1000,
         });
-        setEditField(null);
+        setIsEditing(false);
 
         const updatedProfileResponse = await fetch(
           "http://localhost:5000/api/auth/me",
@@ -309,29 +319,30 @@ const Profile = () => {
         );
         const updatedProfileData = await updatedProfileResponse.json();
         if (updatedProfileResponse.ok) {
-          console.log("[DEBUG] Refreshed profile data after field update:", {
+          console.log("[DEBUG] Refreshed profile data after update:", {
             fullName: updatedProfileData.fullName,
             profilePicture: updatedProfileData.profilePicture
               ? "base64 string"
               : "null",
           });
           setProfile({
-            profilePicture:
-              updatedProfileData.profilePicture || defaultProfile,
+            profilePicture: updatedProfileData.profilePicture || defaultProfile,
             name: updatedProfileData.fullName,
             id: updatedProfileData.id || "not-set",
             role: updatedProfileData.role || "not-set",
             dob: formatDate(updatedProfileData.dateOfBirth),
-            phone: data.phone || "not-set",
+            phone: updatedProfileData.phone || "not-set",
             personalEmail: updatedProfileData.personalEmail || "not-set",
             emergencyContact: updatedProfileData.emergencyContact || "not-set",
             bloodGroup: updatedProfileData.bloodGroup || "not-set",
             address: updatedProfileData.address || "not-set",
             yearsOfExperience: updatedProfileData.yearsOfExperience || "0",
           });
+        } else {
+          setError("Failed to refresh profile data.");
         }
       } else {
-        console.log("[DEBUG] Failed to update field:", data.message);
+        console.log("[DEBUG] Failed to update profile:", data.message);
         setError(data.message || "Failed to update profile.");
       }
     } catch (err) {
@@ -352,8 +363,7 @@ const Profile = () => {
         const data = await response.json();
         if (response.ok) {
           setProfile({
-            profilePicture:
-              data.profilePicture || defaultProfile,
+            profilePicture: data.profilePicture || defaultProfile,
             name: data.fullName,
             id: data.id || "not-set",
             role: data.role || "not-set",
@@ -372,7 +382,7 @@ const Profile = () => {
     };
 
     fetchProfile();
-    setEditField(null);
+    setIsEditing(false);
   };
 
   if (loading) {
@@ -548,20 +558,36 @@ const Profile = () => {
         }}
       >
         <div className="card-body p-4">
-          <h5
-            className="mb-3 text-white"
-            style={{
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 600,
-              fontSize: "1.1rem",
-            }}
-          >
-            Personal Information
-          </h5>
-          <div className="row g-3">
-            {fieldOrder.map(({ key, label }) => (
-              <div className="col-md-6" key={key}>
-                <div className="position-relative">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5
+              className="text-white"
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 600,
+                fontSize: "1.1rem",
+              }}
+            >
+              Personal Information
+            </h5>
+            {!isEditing && (
+              <button
+                className="btn btn-sm px-3 py-1 d-flex align-items-center"
+                style={{
+                  backgroundColor: "#7c3aed",
+                  color: "#fff",
+                  fontFamily: "'Roboto', sans-serif",
+                  borderRadius: "8px",
+                }}
+                onClick={() => setIsEditing(true)}
+              >
+                <FaEdit className="me-1" /> Edit
+              </button>
+            )}
+          </div>
+          {isEditing ? (
+            <div className="row g-3">
+              {fieldOrder.map(({ key, label, type }) => (
+                <div className="col-md-6" key={key}>
                   <label
                     htmlFor={key}
                     className="form-label text-capitalize small mb-1"
@@ -573,89 +599,84 @@ const Profile = () => {
                   >
                     {label}
                   </label>
-                  {editField === key ? (
-                    <div className="d-flex gap-2">
-                      <input
-                        type={key === "dob" ? "date" : key === "yearsOfExperience" ? "number" : "text"}
-                        id={key}
-                        name={key}
-                        className="form-control bg-dark text-white"
-                        value={profile[key]}
-                        onChange={handleInputChange}
-                        style={{
-                          fontSize: "0.9rem",
-                          padding: "0.5rem",
-                          border: "1px solid #7c3aed",
-                          borderRadius: "8px",
-                          transition: "border-color 0.2s ease",
-                        }}
-                        onFocus={(e) =>
-                          (e.target.style.borderColor = "#db2777")
-                        }
-                        onBlur={(e) =>
-                          (e.target.style.borderColor = "#7c3aed")
-                        }
-                      />
-                      <button
-                        className="btn btn-sm px-3 py-1 d-flex align-items-center"
-                        style={{
-                          backgroundColor: "#28a745",
-                          color: "#fff",
-                          fontFamily: "'Roboto', sans-serif",
-                          borderRadius: "8px",
-                        }}
-                        onClick={() => handleUpdateField(key)}
-                      >
-                        <span className="d-none d-sm-inline me-1">Save</span>
-                        <i className="bi bi-check-lg"></i>
-                      </button>
-                      <button
-                        className="btn btn-sm px-3 py-1 d-flex align-items-center"
-                        style={{
-                          backgroundColor: "#dc3545",
-                          color: "#fff",
-                          fontFamily: "'Roboto', sans-serif",
-                          borderRadius: "8px",
-                        }}
-                        onClick={handleCancelEdit}
-                      >
-                        <span className="d-none d-sm-inline me-1">Cancel</span>
-                        <i className="bi bi-x-lg"></i>
-                      </button>
-                    </div>
-                  ) : (
-                    <div
-                      className="form-control bg-dark text-white d-flex justify-content-between align-items-center"
-                      style={{
-                        cursor: "pointer",
-                        fontSize: "0.9rem",
-                        padding: "0.5rem",
-                        border: "1px solid #444",
-                        borderRadius: "8px",
-                        transition: "border-color 0.2s ease",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.borderColor = "#7c3aed")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.borderColor = "#444")
-                      }
-                    >
-                      <span>
-                        {profile[key] || (
-                          <span className="text-muted">Not updated</span>
-                        )}
-                      </span>
-                      <FaEdit
-                        style={{ cursor: "pointer", color: "#7c3aed" }}
-                        onClick={() => setEditField(key)}
-                      />
-                    </div>
-                  )}
+                  <input
+                    type={type}
+                    id={key}
+                    name={key}
+                    className="form-control bg-dark text-white"
+                    value={profile[key]}
+                    onChange={handleInputChange}
+                    style={{
+                      fontSize: "0.9rem",
+                      padding: "0.5rem",
+                      border: "1px solid #7c3aed",
+                      borderRadius: "8px",
+                      transition: "border-color 0.2s ease",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#db2777")}
+                    onBlur={(e) => (e.target.style.borderColor = "#7c3aed")}
+                  />
                 </div>
+              ))}
+              <div className="col-12 mt-4">
+                <button
+                  className="btn btn-sm px-3 py-1 me-2"
+                  style={{
+                    backgroundColor: "#28a745",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    borderRadius: "8px",
+                  }}
+                  onClick={handleUpdateProfile}
+                >
+                  Save
+                </button>
+                <button
+                  className="btn btn-sm px-3 py-1"
+                  style={{
+                    backgroundColor: "#dc3545",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    borderRadius: "8px",
+                  }}
+                  onClick={handleCancelEdit}
+                >
+                  Cancel
+                </button>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="row g-3">
+              {fieldOrder.map(({ key, label }) => (
+                <div className="col-md-6" key={key}>
+                  <label
+                    htmlFor={key}
+                    className="form-label text-capitalize small mb-1"
+                    style={{
+                      color: "#e2e8f0",
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {label}
+                  </label>
+                  <div
+                    className="form-control bg-dark text-white"
+                    style={{
+                      fontSize: "0.9rem",
+                      padding: "0.5rem",
+                      border: "1px solid #444",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    {profile[key] || (
+                      <span className="text-muted">Not updated</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -691,7 +712,9 @@ const Profile = () => {
               </div>
               <div className="modal-body" style={{ padding: "1rem" }}>
                 {selectedImage && (
-                  <div
+                 
+
+ <div
                     style={{
                       width: "100%",
                       maxWidth: "300px",

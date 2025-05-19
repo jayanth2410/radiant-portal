@@ -1,57 +1,167 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [newProject, setNewProject] = useState({
     title: "",
-    role: "",
+    myRole: "",
     description: "",
     startDate: "",
     endDate: "",
     techUsed: [],
   });
   const [newTech, setNewTech] = useState("");
-  const [showAddProject, setShowAddProject] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleAddProject = () => {
-    if (
-      !newProject.title ||
-      !newProject.description ||
-      !newProject.startDate ||
-      !newProject.endDate
-    ) {
-      alert("Please fill in all the required fields.");
-      return;
+  // Fetch projects on mount
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/projects", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      console.log("[DEBUG] Fetched projects:", response.data.projects.length);
+      setProjects(response.data.projects || []);
+    } catch (error) {
+      console.error("[ERROR] Fetching projects:", error.message);
+      toast.error(error.response?.data?.message || "Failed to fetch projects", {
+        autoClose: 1000,
+        theme: "dark",
+      });
     }
-    setProjects([newProject, ...projects]);
-    setNewProject({
-      title: "",
-      role: "",
-      description: "",
-      startDate: "",
-      endDate: "",
-      techUsed: [],
-    });
-    setShowAddProject(false);
   };
 
-  const handleDeleteProject = (title) => {
+  const handleAddOrUpdateProject = async () => {
+    if (
+      !newProject.title ||
+      !newProject.myRole ||
+      !newProject.description ||
+      !newProject.startDate
+    ) {
+      console.log("[DEBUG] Validation failed: Required fields missing");
+      toast.error("Title, role, description, and start date are required", {
+        autoClose: 1000,
+        theme: "dark",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const projectData = {
+        title: newProject.title,
+        myRole: newProject.myRole,
+        description: newProject.description,
+        startDate: newProject.startDate,
+        endDate: newProject.endDate || null,
+        techUsed: newProject.techUsed,
+      };
+
+      let response;
+      if (editId) {
+        // Update project
+        console.log("[DEBUG] Updating project:", { projectId: editId });
+        response = await axios.put(
+          `http://localhost:5000/api/projects/${editId}`,
+          projectData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setProjects(
+          projects.map((proj) =>
+            proj._id === editId ? response.data.project : proj
+          )
+        );
+
+        toast.success("Project updated successfully!", {
+          autoClose: 1000,
+          // theme: "dark",
+        });
+      } else {
+        // Create project
+        console.log("[DEBUG] Creating new project");
+        response = await axios.post(
+          `http://localhost:5000/api/projects`,
+          projectData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setProjects([response.data.project, ...projects]);
+        toast.success("Project added successfully!", {
+          autoClose: 1000,
+          theme: "dark",
+        });
+      }
+
+      resetForm();
+    } catch (error) {
+      console.error("[ERROR] Saving project:", error.message);
+      toast.error(error.response?.data?.message || "Failed to save project", {
+        autoClose: 1000,
+        theme: "dark",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId, title) => {
     const confirmation = prompt(
       `To delete the project, type its name: "${title}"`
     );
-    if (confirmation === title) {
-      setProjects(projects.filter((proj) => proj.title !== title));
-    } else {
-      alert("Project name did not match. Deletion canceled.");
+    if (confirmation !== title) {
+      console.log("[DEBUG] Deletion canceled: Name mismatch");
+      toast.error("Project name did not match. Deletion canceled.", {
+        autoClose: 1000,
+        theme: "dark",
+      });
+      return;
+    }
+
+    try {
+      console.log("[DEBUG] Deleting project:", { projectId });
+      await axios.delete(`http://localhost:5000/api/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setProjects(projects.filter((proj) => proj._id !== projectId));
+      toast.success("Project deleted successfully!", {
+        autoClose: 1000,
+        theme: "dark",
+      });
+    } catch (error) {
+      console.error("[ERROR] Deleting project:", error.message);
+      toast.error(error.response?.data?.message || "Failed to delete project", {
+        autoClose: 1000,
+        theme: "dark",
+      });
     }
   };
 
-  const handleEditProject = (index) => {
-    const projToEdit = projects[index];
-    setNewProject(projToEdit);
-    setShowAddProject(true);
-    // Remove the project being edited from the list temporarily
-    setProjects(projects.filter((_, i) => i !== index));
+  const handleEditProject = (proj) => {
+    console.log("[DEBUG] Editing project:", { projectId: proj._id });
+    setNewProject({
+      title: proj.title,
+      myRole: proj.myRole,
+      description: proj.description,
+      startDate: proj.startDate.split("T")[0],
+      endDate: proj.endDate ? proj.endDate.split("T")[0] : "",
+      techUsed: proj.techUsed,
+    });
+    setEditId(proj._id);
+    setShowModal(true);
   };
 
   const handleAddTech = () => {
@@ -71,241 +181,572 @@ const Projects = () => {
     });
   };
 
+  const resetForm = () => {
+    setNewProject({
+      title: "",
+      myRole: "",
+      description: "",
+      startDate: "",
+      endDate: "",
+      techUsed: [],
+    });
+    setNewTech("");
+    setEditId(null);
+    setShowModal(false);
+  };
+
   return (
-    <div className="mb-5">
+    <div className="container">
       <h2
         className="mb-4 text-white fw-bold"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
         Projects
       </h2>
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover={false}
+        theme="dark"
+      />
+
       {/* Add Project Button */}
-      {!showAddProject && (
-        <div className="text-center mt-4" style={{ marginBottom: "2rem" }}>
-          <button
-            className="btn"
-            style={{ backgroundColor: "#7c3aed", color: "#fff" }}
-            onClick={() => setShowAddProject(true)}
-          >
-            + Add Project
-          </button>
-        </div>
-      )}
+      <div className="text-center mb-4">
+        <button
+          className="btn btn-primary px-4 py-2"
+          style={{
+            backgroundColor: "#7c3aed",
+            border: "none",
+            fontFamily: "'Roboto', sans-serif",
+            fontSize: "1rem",
+            borderRadius: "8px",
+            transition: "background-color 0.2s ease",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#6b32cc")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#7c3aed")
+          }
+          onClick={() => setShowModal(true)}
+        >
+          <i className="bi bi-plus-circle me-2"></i>Add Project
+        </button>
+      </div>
 
       {/* No Projects Placeholder */}
-      {projects.length === 0 && !showAddProject && (
+      {projects.length === 0 && (
         <div
-          className="d-flex flex-column align-items-center justify-content-center"
+          className="d-flex flex-column align-items-center justify-content-center text-white"
           style={{
-            height: "300px",
-            backgroundColor: "#333",
-            borderRadius: "8px",
-            color: "#fff",
+            backgroundColor: "#222",
+            borderRadius: "10px",
+            padding: "3rem",
+            border: "1px solid #444",
           }}
         >
           <i
             className="bi bi-folder"
-            style={{ fontSize: "3rem", color: "#7c3aed" }}
+            style={{ fontSize: "3rem", color: "#e2e8f0" }}
           ></i>
-          <p className="mt-3">No projects added yet.</p>
+          <p
+            className="mt-3"
+            style={{
+              fontFamily: "'Roboto', sans-serif",
+              fontSize: "1.1rem",
+              color: "#e2e8f0",
+            }}
+          >
+            No projects added yet.
+          </p>
         </div>
       )}
 
-      {/* Add Project Form */}
-      {showAddProject && (
-        <div
-          className="bg-dark text-white p-4"
-          style={{ borderRadius: "0.5rem", marginBottom: "2rem" }}
-        >
-          <h2 className="text-center">Add Project</h2>
-          <div className="mb-2">
-            <label htmlFor="projectTitle" className="form-label">
-              Project Title
-            </label>
-            <input
-              id="projectTitle"
-              type="text"
-              className="form-control bg-dark text-white"
-              placeholder="Enter Project Title (e.g., E-commerce Platform)"
-              value={newProject.title}
-              onChange={(e) =>
-                setNewProject({ ...newProject, title: e.target.value })
+      {/* Projects List */}
+      <div className="row">
+        {projects.map((proj) => (
+          <div key={proj._id} className="col-md-6 col-lg-4 mb-4">
+            <div
+              className="card bg-dark text-white h-100 shadow-lg"
+              style={{
+                borderRadius: "10px",
+                border: "1px solid #444",
+                backgroundColor: "#222",
+                transition: "transform 0.2s ease",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = "scale(1.02)")
               }
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="projectRole" className="form-label">
-              Role
-            </label>
-            <input
-              id="projectRole"
-              type="text"
-              className="form-control bg-dark text-white"
-              placeholder="Enter Role (e.g., Developer, Team Lead)"
-              value={newProject.role || ""}
-              onChange={(e) =>
-                setNewProject({ ...newProject, role: e.target.value })
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = "scale(1)")
               }
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="projectDescription" className="form-label">
-              Project Description
-            </label>
-            <textarea
-              id="projectDescription"
-              className="form-control bg-dark text-white"
-              placeholder="Enter Project Description"
-              value={newProject.description}
-              onChange={(e) =>
-                setNewProject({ ...newProject, description: e.target.value })
-              }
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="projectStartDate" className="form-label">
-              Start Date
-            </label>
-            <input
-              id="projectStartDate"
-              type="date"
-              className="form-control bg-dark text-white"
-              value={newProject.startDate}
-              onChange={(e) =>
-                setNewProject({ ...newProject, startDate: e.target.value })
-              }
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="projectEndDate" className="form-label">
-              End Date
-            </label>
-            <input
-              id="projectEndDate"
-              type="date"
-              className="form-control bg-dark text-white"
-              value={newProject.endDate}
-              onChange={(e) =>
-                setNewProject({ ...newProject, endDate: e.target.value })
-              }
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="projectTech" className="form-label">
-              Technologies Used
-            </label>
-            <input
-              id="projectTech"
-              type="text"
-              className="form-control bg-dark text-white"
-              placeholder="Enter Technology (e.g., React, Node.js)"
-              value={newTech}
-              onChange={(e) => setNewTech(e.target.value)}
-            />
-            <button className="btn btn-primary mt-2" onClick={handleAddTech}>
-              + Add Technology
-            </button>
-          </div>
-          <div className="mb-2 d-flex flex-wrap gap-2">
-            {newProject.techUsed.map((tech, index) => (
-              <span
-                key={index}
-                className="badge d-flex align-items-center"
-                style={{
-                  padding: "0.5rem 1rem",
-                  borderRadius: "1rem",
-                  background: "#A4A5A1",
-                  color: "black",
-                }}
-              >
-                {tech}
-                <button
-                  type="button"
-                  className="btn-close btn-close-dark ms-2"
-                  style={{ fontSize: "0.8rem" }}
-                  aria-label="Remove"
-                  onClick={() => handleRemoveTech(index)}
-                ></button>
-              </span>
-            ))}
-          </div>
-          <button
-            className="btn btn-success"
-            onClick={handleAddProject}
-            style={{ width: "10rem", marginTop: "2rem" }}
-          >
-            Confirm
-          </button>
-          <button
-            className="btn btn-secondary ms-2"
-            onClick={() => setShowAddProject(false)}
-            style={{ width: "10rem", marginTop: "2rem" }}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-      {/* List of Projects */}
-      {projects.map((proj, index) => (
-        <div
-          key={index}
-          className="card bg-dark text-white p-3 mb-3 d-flex flex-row align-items-center"
-          style={{ borderRadius: "8px" }}
-        >
-          {/* Content Section */}
-          <div className="flex-grow-1">
-            <h3 className="mb-2">{proj.title}</h3>
-            <p
-              className="mb-1"
-              style={{ fontSize: "0.9rem", color: "#b5b5b5" }}
             >
-              <i className="bi bi-calendar3" style={{ color: "#fff" }}></i>{" "}
-              {`${proj.startDate} - ${proj.endDate}`}
-            </p>
-            <p
-              className="mb-1"
-              style={{ fontSize: "0.9rem", color: "#d1d1d1" }}
-            >
-              Role: {proj.role || "N/A"}
-            </p>
-            <p
-              className="mb-2"
-              style={{ fontSize: "0.9rem", color: "#d1d1d1" }}
-            >
-              {proj.description}
-            </p>
-            <div className="d-flex flex-wrap gap-2">
-              {proj.techUsed.map((tech, index) => (
-                <span
-                  key={index}
-                  className="badge bg-primary"
-                  style={{ fontSize: "0.9rem" }}
+              <div className="card-body">
+                <h5
+                  className="card-title text-info"
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 700,
+                    fontSize: "2rem",
+                  }}
                 >
-                  {tech}
-                </span>
-              ))}
+                  {proj.title}
+                </h5>
+                <p
+                  className="card-text"
+                  style={{
+                    fontFamily: "'Roboto', sans-serif",
+                    fontWeight: 500,
+                    fontSize: "1.1rem",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  {proj.myRole}
+                </p>
+                <h6
+                  className="mt-3"
+                  style={{
+                    fontFamily: "'Roboto', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  Date Range
+                </h6>
+                <p
+                  className="card-text"
+                  style={{
+                    fontFamily: "'Roboto', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "0.95rem",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  {new Date(proj.startDate).toLocaleDateString()} -{" "}
+                  {proj.endDate
+                    ? new Date(proj.endDate).toLocaleDateString()
+                    : "Ongoing"}
+                </p>
+                <h6
+                  className="mt-3"
+                  style={{
+                    fontFamily: "'Roboto', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  Project Details
+                </h6>
+                <p
+                  className="card-text"
+                  style={{
+                    fontFamily: "'Roboto', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "0.95rem",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  {proj.description}
+                </p>
+                <h6
+                  className="mt-3"
+                  style={{
+                    fontFamily: "'Roboto', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  Technologies Used
+                </h6>
+                <div className="d-flex flex-wrap gap-2">
+                  {proj.techUsed.map((tech, index) => (
+                    <span
+                      key={index}
+                      className="badge"
+                      style={{
+                        backgroundColor: "#444",
+                        color: "#ffffff",
+                        fontFamily: "'Roboto', sans-serif",
+                        fontSize: "0.85rem",
+                        padding: "0.4rem 0.8rem",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="card-footer d-flex justify-content-end gap-2">
+                <button
+                  className="btn btn-sm px-3 py-1"
+                  style={{
+                    backgroundColor: "#ffc107",
+                    color: "#000",
+                    fontFamily: "'Roboto', sans-serif",
+                    fontSize: "0.85rem",
+                    borderRadius: "8px",
+                    transition: "background-color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#e0a800")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#ffc107")
+                  }
+                  onClick={() => handleEditProject(proj)}
+                >
+                  <i className="bi bi-pencil me-1"></i> Edit
+                </button>
+                <button
+                  className="btn btn-sm px-3 py-1"
+                  style={{
+                    backgroundColor: "#dc3545",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    fontSize: "0.85rem",
+                    borderRadius: "8px",
+                    transition: "background-color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#c82333")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#dc3545")
+                  }
+                  onClick={() => handleDeleteProject(proj._id, proj.title)}
+                >
+                  <i className="bi bi-trash me-1"></i> Delete
+                </button>
+              </div>
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* Edit/Delete Buttons */}
-          <div className="d-flex flex-column align-items-end">
-            <button
-              className="btn btn-sm btn-danger mb-2"
-              onClick={() => handleDeleteProject(proj.title)}
-              style={{ width: "7rem" }}
+      {/* Modal for Add/Edit Project */}
+      {showModal && (
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div
+              className="modal-content bg-dark text-white"
+              style={{
+                borderRadius: "12px",
+                border: "1px solid #444",
+                backgroundColor: "#222",
+              }}
             >
-              Delete
-            </button>
-            <button
-              className="btn btn-sm btn-warning"
-              onClick={() => handleEditProject(index)}
-              style={{ width: "7rem" }}
-            >
-              Edit
-            </button>
+              <div className="modal-header">
+                <h5
+                  className="modal-title"
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 700,
+                    fontSize: "1.5rem",
+                    color: "#ffffff",
+                  }}
+                >
+                  {editId ? "Edit Project" : "Add Project"}
+                </h5>
+                <button
+                  className="btn-close btn-close-white"
+                  onClick={resetForm}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label
+                    htmlFor="projTitle"
+                    className="form-label"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "0.9rem",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    Title
+                  </label>
+                  <input
+                    id="projTitle"
+                    type="text"
+                    className="form-control bg-dark text-white"
+                    value={newProject.title}
+                    onChange={(e) =>
+                      setNewProject({ ...newProject, title: e.target.value })
+                    }
+                    placeholder="e.g., E-commerce Platform"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontSize: "0.9rem",
+                      border: "1px solid #444",
+                      borderRadius: "8px",
+                      backgroundColor: "#222",
+                    }}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label
+                    htmlFor="projRole"
+                    className="form-label"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "0.9rem",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    Role
+                  </label>
+                  <input
+                    id="projRole"
+                    type="text"
+                    className="form-control bg-dark text-white"
+                    value={newProject.myRole}
+                    onChange={(e) =>
+                      setNewProject({ ...newProject, myRole: e.target.value })
+                    }
+                    placeholder="e.g., Frontend Developer"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontSize: "0.9rem",
+                      border: "1px solid #444",
+                      borderRadius: "8px",
+                      backgroundColor: "#222",
+                    }}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label
+                    htmlFor="projDescription"
+                    className="form-label"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "0.9rem",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    Project Details
+                  </label>
+                  <textarea
+                    id="projDescription"
+                    className="form-control bg-dark text-white"
+                    value={newProject.description}
+                    onChange={(e) =>
+                      setNewProject({
+                        ...newProject,
+                        description: e.target.value,
+                      })
+                    }
+                    placeholder="Describe the project"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontSize: "0.9rem",
+                      border: "1px solid #444",
+                      borderRadius: "8px",
+                      backgroundColor: "#222",
+                    }}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label
+                    htmlFor="projStartDate"
+                    className="form-label"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "0.9rem",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    Date Range
+                  </label>
+                  <input
+                    id="projStartDate"
+                    type="date"
+                    className="form-control bg-dark text-white"
+                    value={newProject.startDate}
+                    onChange={(e) =>
+                      setNewProject({
+                        ...newProject,
+                        startDate: e.target.value,
+                      })
+                    }
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontSize: "0.9rem",
+                      border: "1px solid #444",
+                      borderRadius: "8px",
+                      backgroundColor: "#222",
+                    }}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label
+                    htmlFor="projEndDate"
+                    className="form-label"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "0.9rem",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    End Date (Optional)
+                  </label>
+                  <input
+                    id="projEndDate"
+                    type="date"
+                    className="form-control bg-dark text-white"
+                    value={newProject.endDate}
+                    onChange={(e) =>
+                      setNewProject({ ...newProject, endDate: e.target.value })
+                    }
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontSize: "0.9rem",
+                      border: "1px solid #444",
+                      borderRadius: "8px",
+                      backgroundColor: "#222",
+                    }}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label
+                    htmlFor="projTech"
+                    className="form-label"
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "0.9rem",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    Technologies Used
+                  </label>
+                  <div className="input-group">
+                    <input
+                      id="projTech"
+                      type="text"
+                      className="form-control bg-dark text-white"
+                      value={newTech}
+                      onChange={(e) => setNewTech(e.target.value)}
+                      placeholder="e.g., React"
+                      style={{
+                        fontFamily: "'Roboto', sans-serif",
+                        fontSize: "0.9rem",
+                        border: "1px solid #444",
+                        borderRadius: "8px 0 0 8px",
+                        backgroundColor: "#222",
+                      }}
+                    />
+                    <button
+                      className="btn btn-primary"
+                      style={{
+                        backgroundColor: "#7c3aed",
+                        border: "none",
+                        fontFamily: "'Roboto', sans-serif",
+                        fontSize: "0.9rem",
+                        borderRadius: "0 8px 8px 0",
+                        transition: "background-color 0.2s ease",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#6b32cc")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#7c3aed")
+                      }
+                      onClick={handleAddTech}
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="d-flex flex-wrap gap-2 mt-2">
+                    {newProject.techUsed.map((tech, index) => (
+                      <span
+                        key={index}
+                        className="badge d-flex align-items-center"
+                        style={{
+                          backgroundColor: "#444",
+                          color: "#ffffff",
+                          fontFamily: "'Roboto', sans-serif",
+                          fontSize: "0.85rem",
+                          padding: "0.4rem 0.8rem",
+                          borderRadius: "6px",
+                        }}
+                      >
+                        {tech}
+                        <button
+                          className="btn-close btn-close-white ms-2"
+                          style={{ fontSize: "0.6rem" }}
+                          onClick={() => handleRemoveTech(index)}
+                        ></button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-sm px-3 py-1"
+                  style={{
+                    backgroundColor: "#dc3545",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    fontSize: "0.85rem",
+                    borderRadius: "8px",
+                    transition: "background-color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#c82333")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#dc3545")
+                  }
+                  onClick={resetForm}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-sm px-3 py-1"
+                  style={{
+                    backgroundColor: "#28a745",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    fontSize: "0.85rem",
+                    borderRadius: "8px",
+                    transition: "background-color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#218838")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#28a745")
+                  }
+                  onClick={handleAddOrUpdateProject}
+                  disabled={loading}
+                >
+                  {loading ? "Saving..." : editId ? "Update" : "Add"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 };

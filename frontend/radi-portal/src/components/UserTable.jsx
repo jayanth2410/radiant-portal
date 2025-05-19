@@ -23,6 +23,7 @@ const UserTable = ({
 
   // Filter users based on search term, certifications, and skills
   const filteredUsers = users.filter((user) => {
+    if(user.category === "admin") return false; // Skip admin users
     return (
       user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (certificationFilter
@@ -339,7 +340,7 @@ const UserTable = ({
                           </span>
                         ))
                       ) : (
-                        <span className="text-muted">No certifications</span>
+                        <span className="text">No certifications</span>
                       )}
                     </td>
                     <td>
@@ -359,7 +360,7 @@ const UserTable = ({
                           </span>
                         ))
                       ) : (
-                        <span className="text-muted">None</span>
+                        <span className="text">None</span>
                       )}
                     </td>
                     <td className="fw-bold">

@@ -6,39 +6,67 @@ const userSchema = new mongoose.Schema({
     type: Buffer,
     default: null,
   },
-  fullName: { type: String, required: true }, // No default, provided in signup
-  email: { type: String, required: true, unique: true }, // No default, provided in signup
-  password: { type: String, required: true }, // No default, provided in signup
-  id: { type: String, default: "not-set" }, // Non-unique, default "not-set"
-  dateOfBirth: { type: Date, default: null }, // Optional, default null
-  phone: { type: String, default: "not-set" }, // Optional, default "not-set"
-  role: { type: String, default: "not-set" }, // Already has default "not-set"
-  address: { type: String, default: "not-set" }, // Optional, default "not-set"
-  yearsOfExperience: { type: Number, default: 0 }, // Optional, default 0
+  fullName: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  id: { type: String, default: "not-set" },
+  dateOfBirth: { type: Date, default: null },
+  phone: { type: String, default: "not-set" },
+  role: { type: String, default: "not-set" },
+  address: { type: String, default: "not-set" },
+  yearsOfExperience: { type: Number, default: 0 },
   category: {
     type: String,
     required: true,
     enum: ["user", "admin"],
     default: "user",
-  }, // Already has default "user"
-  projects: { type: [String], default: [] }, // Default empty array
-  certifications: { type: [String], default: [] }, // Default empty array
-  skills: { type: [String], default: [] }, // Default empty array
-  bloodGroup: { type: String, default: "not-set" }, // Optional, default "not-set"
-  emergencyContact: { type: String, default: "not-set" }, // Optional, default "not-set"
-  personalEmail: { type: String, default: "not-set" }, // Optional, default "not-set"
+  },
+  projects: {
+    type: [
+      {
+        title: { type: String, required: true },
+        myRole: { type: String, required: true },
+        description: { type: String, required: true },
+        startDate: { type: Date, required: true },
+        endDate: { type: Date, default: null },
+        techUsed: { type: [String], default: [] },
+      },
+    ],
+    default: [],
+  },
+  certifications: {
+    type: [
+      {
+        title: { type: String, required: true },
+        duration: { type: String, required: true },
+        skillsObtained: { type: [String], default: [] },
+        certificateImage: { type: Buffer, default: null },
+      },
+    ],
+    default: [],
+  },
+  skills: { type: [String], default: [] },
+  bloodGroup: { type: String, default: "not-set" },
+  emergencyContact: { type: String, default: "not-set" },
+  personalEmail: { type: String, default: "not-set" },
   tasksCreated: {
     type: [
       {
         title: { type: String, default: "not-set" },
         description: { type: String, default: "not-set" },
         deadline: { type: Date, default: null },
-        assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
-        assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        assignedTo: [
+          { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
+        ],
+        assignedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
         status: {
           type: String,
-          enum: ["pending", "completed", "completed after deadline"],
-          default: "pending",
+          enum: ["in progress", "testing", "resolved", "completed"],
+          default: "in progress",
         },
       },
     ],
@@ -50,11 +78,15 @@ const userSchema = new mongoose.Schema({
         title: { type: String, default: "not-set" },
         description: { type: String, default: "not-set" },
         deadline: { type: Date, default: null },
-        assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        assignedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
         status: {
           type: String,
-          enum: ["pending", "completed", "completed after deadline"],
-          default: "pending",
+          enum: ["in progress", "testing", "resolved", "completed"],
+          default: "in progress",
         },
       },
     ],

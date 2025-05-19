@@ -19,7 +19,6 @@ router.post("/create-task", verifyToken, async (req, res) => {
         .json({ message: "Access denied. Only admins can create tasks." });
     }
 
-    // Validate and convert deadline to a Date object
     const deadlineDate = new Date(deadline);
     if (isNaN(deadlineDate.getTime())) {
       return res.status(400).json({ message: "Invalid deadline format" });
@@ -32,7 +31,8 @@ router.post("/create-task", verifyToken, async (req, res) => {
       deadline: deadlineDate,
       assignedTo, // Include assignedTo for admin's tasksCreated
       assignedBy: admin._id,
-      status: "pending",
+      status: "in progress", // Set default status
+      completed: false, // Initialize completed as false
     };
 
     admin.tasksCreated.push(newTask);
@@ -56,7 +56,8 @@ router.post("/create-task", verifyToken, async (req, res) => {
       description,
       deadline: deadlineDate,
       assignedBy: admin._id,
-      status: "pending",
+      status: "in progress", // Set default status
+      completed: false, // Initialize completed as false
     };
 
     // Add the task to the assigned users' tasks array
@@ -83,9 +84,12 @@ router.post("/create-task", verifyToken, async (req, res) => {
 // Fetch tasks for the logged-in user
 router.get("/", verifyToken, async (req, res) => {
   try {
+    // Define currentDate (01:06 PM IST on May 16, 2025)
+    const currentDate = new Date("2025-05-16T13:06:00+05:30");
+
     const user = await User.findById(req.user.id)
-      .populate("tasksCreated.assignedTo", "fullName") // Populate assignedTo for admin's tasks
-      .populate("tasks.assignedBy", "fullName"); // Populate assignedBy for user's tasks
+      .populate("tasksCreated.assignedTo", "fullName")
+      .populate("tasks.assignedBy", "fullName");
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -117,7 +121,6 @@ router.delete("/delete-task/:taskId", verifyToken, async (req, res) => {
         .json({ message: "Access denied. Only admins can delete tasks." });
     }
 
-    // Remove the task from the admin's tasksCreated array
     const task = admin.tasksCreated.id(taskId);
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
@@ -126,7 +129,6 @@ router.delete("/delete-task/:taskId", verifyToken, async (req, res) => {
     admin.tasksCreated.pull({ _id: taskId });
     await admin.save();
 
-    // Remove the task from all assigned users' tasks arrays
     await User.updateMany(
       { "tasks._id": taskId },
       { $pull: { tasks: { _id: taskId } } }
@@ -139,91 +141,85 @@ router.delete("/delete-task/:taskId", verifyToken, async (req, res) => {
   }
 });
 
-// Mark a task as completed (for users)
-router.put("/mark-completed/:taskId", verifyToken, async (req, res) => {
+// Update task status (for both users and admins)
+router.put("/update-status/:taskId", verifyToken, async (req, res) => {
   try {
+    const { status, completed } = req.body;
+
+    if (!status || completed === undefined) {
+      return res
+        .status(400)
+        .json({ message: "Status and completed fields are required" });
+    }
+
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.category !== "user") {
-      return res.status(403).json({ message: "Access denied. Users only." });
-    }
+    let task;
+    let admin;
 
-    const task = user.tasks.id(req.params.taskId);
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    if (task.status !== "pending") {
-      return res.status(400).json({ message: "Task is already completed" });
-    }
-
-    const currentDate = new Date("2025-05-14T16:07:00+05:30"); // Current date and time
-    const deadline = new Date(task.deadline);
-    task.status =
-      currentDate > deadline ? "completed after deadline" : "completed";
-
-    // Find the admin who assigned the task and update their tasksCreated
-    const admin = await User.findById(task.assignedBy);
-    if (admin) {
-      const adminTask = admin.tasksCreated.id(req.params.taskId);
-      if (adminTask) {
-        adminTask.status = task.status;
-        await admin.save();
+    if (user.category === "admin") {
+      // Admin updating their tasksCreated
+      task = user.tasksCreated.id(req.params.taskId);
+      if (!task) {
+        return res
+          .status(404)
+          .json({ message: "Task not found in admin's created tasks" });
       }
+
+      // Update the admin's task
+      task.status = status;
+      task.completed = completed;
+
+      // Find all users assigned to this task and update their tasks array
+      await User.updateMany(
+        { "tasks._id": req.params.taskId },
+        {
+          $set: {
+            "tasks.$.status": status,
+            "tasks.$.completed": completed,
+          },
+        }
+      );
+
+      await user.save();
+    } else {
+      // User updating their assigned tasks
+      task = user.tasks.id(req.params.taskId);
+      if (!task) {
+        return res
+          .status(404)
+          .json({ message: "Task not found in user's tasks" });
+      }
+
+      // Update the user's task
+      task.status = status;
+      task.completed = completed;
+
+      // Find the admin who assigned the task and update their tasksCreated
+      admin = await User.findById(task.assignedBy);
+      if (admin) {
+        const adminTask = admin.tasksCreated.id(req.params.taskId);
+        if (adminTask) {
+          adminTask.status = status;
+          adminTask.completed = completed;
+          await admin.save();
+        }
+      }
+
+      await user.save();
     }
 
-    await user.save();
-    res.status(200).json({ message: "Task marked as completed", task });
+    res.status(200).json({ message: "Task status updated successfully", task });
   } catch (error) {
-    console.error("Error marking task as completed:", error);
+    console.error("Error updating task status:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// New route: Undo task completion (for users)
-router.put("/undo-complete/:taskId", verifyToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.category !== "user") {
-      return res.status(403).json({ message: "Access denied. Users only." });
-    }
-
-    const task = user.tasks.id(req.params.taskId);
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    if (task.status === "pending") {
-      return res.status(400).json({ message: "Task is not completed" });
-    }
-
-    task.status = "pending";
-
-    // Find the admin who assigned the task and update their tasksCreated
-    const admin = await User.findById(task.assignedBy);
-    if (admin) {
-      const adminTask = admin.tasksCreated.id(req.params.taskId);
-      if (adminTask) {
-        adminTask.status = task.status;
-        await admin.save();
-      }
-    }
-
-    await user.save();
-    res.status(200).json({ message: "Task completion undone", task });
-  } catch (error) {
-    console.error("Error undoing task completion:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
+// Update a task
 router.put("/update-task/:taskId", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -242,7 +238,6 @@ router.put("/update-task/:taskId", verifyToken, async (req, res) => {
 
     const { title, description, deadline, assignedTo } = req.body;
 
-    // Validate required fields
     if (
       !title ||
       !description ||
@@ -253,7 +248,6 @@ router.put("/update-task/:taskId", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Validate assigned users exist
     const assignedUsers = await User.find({ _id: { $in: assignedTo } });
     if (assignedUsers.length !== assignedTo.length) {
       return res
@@ -266,6 +260,8 @@ router.put("/update-task/:taskId", verifyToken, async (req, res) => {
     task.description = description;
     task.deadline = new Date(deadline).toISOString();
     task.assignedTo = assignedTo;
+    task.status = "in progress"; // Reset status to "in progress" on update
+    task.completed = false; // Reset completed to false on update
 
     // Update the task in all assigned users' tasks array who already have it
     await User.updateMany(
@@ -275,7 +271,9 @@ router.put("/update-task/:taskId", verifyToken, async (req, res) => {
           "tasks.$.title": title,
           "tasks.$.description": description,
           "tasks.$.deadline": task.deadline,
-          "tasks.$.assignedBy": user._id, // Ensure assignedBy is updated
+          "tasks.$.assignedBy": user._id,
+          "tasks.$.status": "in progress", // Reset status
+          "tasks.$.completed": false, // Reset completed
         },
       }
     );
@@ -306,8 +304,9 @@ router.put("/update-task/:taskId", verifyToken, async (req, res) => {
           title,
           description,
           deadline: task.deadline,
-          status: "pending",
           assignedBy: user._id,
+          status: "in progress", // Set default status
+          completed: false, // Initialize completed as false
         });
         await newUser.save();
         console.log(`Task added to user ${userId}`);

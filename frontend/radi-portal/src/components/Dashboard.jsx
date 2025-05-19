@@ -15,19 +15,10 @@ import {
 } from "react-icons/fa";
 
 // Define currentDate for display
-const currentDate = new Date("2025-05-16T10:10:00+05:30");
-const formattedDate = currentDate.toLocaleString("en-IN", {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "Asia/Kolkata",
-});
+const currentDate = new Date();
 
 const Dashboard = () => {
-  const [activeSection, setActiveSection] = useState("Profile");
+  const [activeSection, setActiveSection] = useState("Home");
   const { user, loading: contextLoading } = useContext(UserContext);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -327,12 +318,6 @@ const Dashboard = () => {
           height: "100vh",
         }}
       >
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="text-white">{activeSection}</h2>
-          <div className="text-muted">
-            <small>{formattedDate}</small>
-          </div>
-        </div>
         {renderContent()}
       </div>
     </div>

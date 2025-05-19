@@ -153,7 +153,7 @@
       "deadline": {
         "$date": "2025-05-15T16:57:30.815Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "682379fab78885bb78a0b5df"
       }
@@ -169,7 +169,7 @@
       "deadline": {
         "$date": "2025-05-20T06:20:00.000Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68243650b5177f8971fe77d0"
       }
@@ -188,7 +188,7 @@
       "deadline": {
         "$date": "2025-05-15T10:50:00.000Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "6824591720caec9e5773d278"
       }
@@ -207,7 +207,7 @@
       "deadline": {
         "$date": "2025-05-16T08:57:00.000Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68245b1620caec9e5773d2c9"
       }
@@ -232,7 +232,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c7"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68245e26ed554b65e82b4fe2"
       }
@@ -319,7 +319,7 @@
       "deadline": {
         "$date": "2025-05-17T16:57:30.823Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "682379fab78885bb78a0b5e5"
       }
@@ -405,7 +405,7 @@
       "deadline": {
         "$date": "2025-05-19T16:57:30.829Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "682379fab78885bb78a0b5eb"
       }
@@ -491,7 +491,7 @@
       "deadline": {
         "$date": "2025-05-21T16:57:30.836Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "682379fab78885bb78a0b5f1"
       }
@@ -577,7 +577,7 @@
       "deadline": {
         "$date": "2025-05-23T16:57:30.842Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "682379fab78885bb78a0b5f7"
       }
@@ -619,7 +619,7 @@
       "deadline": {
         "$date": "2025-05-16T08:57:00.000Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68245b1620caec9e5773d2cb"
       }
@@ -633,7 +633,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c7"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68245e26ed554b65e82b4fe2"
       }
@@ -677,7 +677,7 @@
       "deadline": {
         "$date": "2025-05-16T08:57:00.000Z"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68245b1620caec9e5773d2cb"
       }
@@ -691,7 +691,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c7"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68245e26ed554b65e82b4fe2"
       }
@@ -733,7 +733,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c7"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68245e26ed554b65e82b4fe2"
       }
@@ -880,7 +880,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c6"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68246cc5d60b98888b79b082"
       }
@@ -924,7 +924,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c6"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "682468b2d1f8a075e219d508"
       }
@@ -938,7 +938,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c6"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68246cc5d60b98888b79b082"
       }
@@ -952,7 +952,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c6"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68246cc5d60b98888b79b082"
       }
@@ -1038,7 +1038,7 @@
       "assignedBy": {
         "$oid": "682379fab78885bb78a0b5c6"
       },
-      "status": "pending",
+      "status": "in progress",
       "_id": {
         "$oid": "68246cc5d60b98888b79b082"
       }

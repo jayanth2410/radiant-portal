@@ -29,6 +29,7 @@ mongoose
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/tasks", require("./routes/tasks"));
 app.use("/api/users", require("./routes/users"));
+app.use("/api", require("./routes/certsAndProjs"));
 // Catch-all route for 404 errors (optional, added previously)
 app.use((req, res) => {
   res.status(404).json({ message: "Endpoint not found" });

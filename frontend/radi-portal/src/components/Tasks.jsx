@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 
+// Define currentDate (12:28 PM IST on May 16, 2025)
+const currentDate = new Date("2025-05-16T12:28:00+05:30");
+const formattedDate = currentDate.toLocaleString("en-IN", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Asia/Kolkata",
+});
+
 const Tasks = ({ users }) => {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
@@ -13,13 +25,14 @@ const Tasks = ({ users }) => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [confirmInput, setConfirmInput] = useState("");
-  // State for updating tasks
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [taskToUpdate, setTaskToUpdate] = useState(null);
   const [updateTitle, setUpdateTitle] = useState("");
   const [updateDescription, setUpdateDescription] = useState("");
   const [updateDeadline, setUpdateDeadline] = useState("");
   const [updateAssignedUserIds, setUpdateAssignedUserIds] = useState([]);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [selectedTaskDescription, setSelectedTaskDescription] = useState("");
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -47,13 +60,41 @@ const Tasks = ({ users }) => {
     fetchTasks();
   }, []);
 
+  // Add Escape key listener to close modals
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === "Escape") {
+        if (showConfirmDelete) {
+          setShowConfirmDelete(false);
+          setTaskToDelete(null);
+          setConfirmInput("");
+        }
+        if (showUpdateModal) {
+          setShowUpdateModal(false);
+          setTaskToUpdate(null);
+          setUpdateTitle("");
+          setUpdateDescription("");
+          setUpdateDeadline("");
+          setUpdateAssignedUserIds([]);
+        }
+        if (showDescriptionModal) {
+          setShowDescriptionModal(false);
+          setSelectedTaskDescription("");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleEsc);
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, [showConfirmDelete, showUpdateModal, showDescriptionModal]);
+
   const handleCreateTask = async (e) => {
     e.preventDefault();
 
     if (!title || !description || !deadline || assignedUserIds.length === 0) {
-      toast.info("All fields are required", {
-          autoClose: 2500,
-        });
+      toast.info("All fields are required", { autoClose: 2500 });
       setSuccess("");
       return;
     }
@@ -92,10 +133,7 @@ const Tasks = ({ users }) => {
           setTasks(fetchData.tasks);
         }
 
-        toast.success("Task Created successfully.", {
-          autoClose: 1500,
-        });
-
+        toast.success("Task created successfully.", { autoClose: 1500 });
         setError("");
         setTitle("");
         setDescription("");
@@ -144,22 +182,16 @@ const Tasks = ({ users }) => {
       const data = await response.json();
       if (response.ok) {
         setTasks(tasks.filter((task) => task._id !== taskToDelete));
-        toast.success("Task deleted successfully.", {
-          autoClose: 1000,
-        });
+        toast.success("Task deleted successfully.", { autoClose: 1000 });
         setShowConfirmDelete(false);
         setTaskToDelete(null);
         setConfirmInput("");
       } else {
-        toast.error(data.message, {
-          autoClose: 1000,
-        });
+        toast.error(data.message, { autoClose: 1000 });
       }
     } catch (error) {
       console.error("Error deleting task:", error);
-      toast.error("Failed to delete task.", {
-        autoClose: 1000,
-      });
+      toast.error("Failed to delete task.", { autoClose: 1000 });
     }
   };
 
@@ -167,7 +199,6 @@ const Tasks = ({ users }) => {
     setTaskToUpdate(task._id);
     setUpdateTitle(task.title);
     setUpdateDescription(task.description);
-    // Format deadline for datetime-local input
     const formattedDeadline = new Date(task.deadline)
       .toISOString()
       .slice(0, 16);
@@ -213,7 +244,6 @@ const Tasks = ({ users }) => {
 
       const data = await response.json();
       if (response.ok) {
-        // Refetch tasks to update the list
         const fetchResponse = await fetch("http://localhost:5000/api/tasks", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -224,9 +254,7 @@ const Tasks = ({ users }) => {
           setTasks(fetchData.tasks);
         }
 
-        toast.success("Task updated successfully", {
-          autoClose: 1000,
-        });
+        toast.success("Task updated successfully", { autoClose: 1000 });
         setShowUpdateModal(false);
         setTaskToUpdate(null);
         setUpdateTitle("");
@@ -234,16 +262,17 @@ const Tasks = ({ users }) => {
         setUpdateDeadline("");
         setUpdateAssignedUserIds([]);
       } else {
-        toast.error(data.message, {
-          autoClose: 2000,
-        });
+        toast.error(data.message, { autoClose: 2000 });
       }
     } catch (error) {
       console.error("Error updating task:", error);
-      toast.error("Failed to update task.", {
-        autoClose: 2000,
-      });
+      toast.error("Failed to update task.", { autoClose: 2000 });
     }
+  };
+
+  const handleViewDescription = (description) => {
+    setSelectedTaskDescription(description);
+    setShowDescriptionModal(true);
   };
 
   const handleAddUser = (e) => {
@@ -275,18 +304,33 @@ const Tasks = ({ users }) => {
   const availableUsers = users.filter(
     (user) => !assignedUserIds.includes(user._id)
   );
-
   const selectedUsers = users.filter((user) =>
     assignedUserIds.includes(user._id)
   );
-
   const availableUpdateUsers = users.filter(
     (user) => !updateAssignedUserIds.includes(user._id)
   );
-
   const selectedUpdateUsers = users.filter((user) =>
     updateAssignedUserIds.includes(user._id)
   );
+
+  // Filter tasks into incomplete and completed
+  const incompleteTasks = tasks.filter((task) => {
+    if (
+      task.status === "in progress" ||
+      task.status === "testing" ||
+      task.status === "resolved"
+    ) {
+      return task;
+    }
+  });
+  const completedTasks = tasks.filter((task) => {
+    if (task.status === "completed") {
+      return task;
+    }
+  });
+  console.log("Incomplete tasks:", incompleteTasks);
+  console.log("Completed tasks:", completedTasks);
 
   if (loading || !users) {
     return <div className="text-white">Loading tasks and users...</div>;
@@ -311,7 +355,12 @@ const Tasks = ({ users }) => {
         theme="dark"
       />
       <div className="mb-5">
-        <h2 className="text-white mb-4">Tasks</h2>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="text-white">Tasks</h2>
+          <div className="text-muted">
+            <small>{formattedDate}</small>
+          </div>
+        </div>
 
         <div className="card bg-dark text-white p-4 mb-4">
           <h4 className="card-title text-white mb-3">Create New Task</h4>
@@ -448,13 +497,14 @@ const Tasks = ({ users }) => {
           </form>
         </div>
 
-        <div className="card bg-dark text-white p-4">
+        <div className="card bg-dark text-white p-4 mb-4">
           <h4 className="card-title text-white mb-3">Task List</h4>
           <div className="table-responsive">
             <table className="table table-dark table-hover mb-0">
               <thead>
                 <tr>
-                  <th>Title</th>
+                  <th style={{ width: "20%" }}>Title</th>
+                  <th>Description</th>
                   <th>Assigned Users</th>
                   <th>Deadline</th>
                   <th>Status</th>
@@ -462,14 +512,28 @@ const Tasks = ({ users }) => {
                 </tr>
               </thead>
               <tbody>
-                {tasks?.length > 0 ? (
-                  tasks.map((task) => {
+                {incompleteTasks.length > 0 ? (
+                  incompleteTasks.map((task) => {
                     const assignedUserNames = task.assignedTo
                       .map((user) => user.fullName || "Unknown User")
                       .join(", ");
                     return (
                       <tr key={task._id}>
                         <td>{task.title}</td>
+                        <td>
+                          <button
+                            className="btn btn-outline-info btn-sm"
+                            onClick={() =>
+                              handleViewDescription(task.description)
+                            }
+                            style={{
+                              whiteSpace: "normal",
+                              overflowWrap: "break-word",
+                            }}
+                          >
+                            View Description
+                          </button>
+                        </td>
                         <td>
                           <span
                             style={{
@@ -486,9 +550,7 @@ const Tasks = ({ users }) => {
                         <td>
                           <span
                             className={`badge ${
-                              task.status === "pending"
-                                ? "bg-secondary"
-                                : "bg-success"
+                              task.completed ? "bg-success" : "bg-info"
                             }`}
                           >
                             {task.status}
@@ -513,8 +575,8 @@ const Tasks = ({ users }) => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center text-white">
-                      No tasks found
+                    <td colSpan="6" className="text-center text-white">
+                      No incomplete tasks found
                     </td>
                   </tr>
                 )}
@@ -523,22 +585,117 @@ const Tasks = ({ users }) => {
           </div>
         </div>
 
-        {/* Confirmation Modal for Deletion */}
+        <div className="card bg-dark text-white p-4">
+          <h4 className="card-title text-white mb-3">Completed Tasks</h4>
+          <div className="table-responsive">
+            <table className="table table-dark table-hover mb-0">
+              <thead>
+                <tr>
+                  <th style={{ width: "20%" }}>Title</th>
+                  <th>Description</th>
+                  <th>Assigned Users</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {completedTasks.length > 0 ? (
+                  completedTasks.map((task) => {
+                    const assignedUserNames = task.assignedTo
+                      .map((user) => user.fullName || "Unknown User")
+                      .join(", ");
+                    return (
+                      <tr key={task._id}>
+                        <td>{task.title}</td>
+                        <td>
+                          <button
+                            className="btn btn-outline-info btn-sm"
+                            onClick={() =>
+                              handleViewDescription(task.description)
+                            }
+                            style={{
+                              whiteSpace: "normal",
+                              overflowWrap: "break-word",
+                            }}
+                          >
+                            View Description
+                          </button>
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              color: assignedUserNames ? "inherit" : "#888",
+                              fontStyle: assignedUserNames
+                                ? "normal"
+                                : "italic",
+                            }}
+                          >
+                            {assignedUserNames || "Unknown Users"}
+                          </span>
+                        </td>
+                        <td>{new Date(task.deadline).toLocaleString()}</td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              task.completed ? "bg-success" : "bg-success"
+                            }`}
+                          >
+                            {task.status}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => initiateDelete(task._id)}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="text-center text-white">
+                      No completed tasks found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {showConfirmDelete && (
           <div
             className="modal fade show d-block"
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
             tabIndex="-1"
             role="dialog"
+            onClick={() => {
+              setShowConfirmDelete(false);
+              setTaskToDelete(null);
+              setConfirmInput("");
+            }}
           >
-            <div className="modal-dialog" role="document">
+            <div
+              className="modal-dialog"
+              role="document"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="modal-content bg-dark text-white">
                 <div className="modal-header">
                   <h5 className="modal-title">Confirm Deletion</h5>
                   <button
                     type="button"
                     className="btn-close btn-close-white"
-                    onClick={() => setShowConfirmDelete(false)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowConfirmDelete(false);
+                      setTaskToDelete(null);
+                      setConfirmInput("");
+                    }}
                   ></button>
                 </div>
                 <div className="modal-body">
@@ -562,14 +719,22 @@ const Tasks = ({ users }) => {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => setShowConfirmDelete(false)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowConfirmDelete(false);
+                      setTaskToDelete(null);
+                      setConfirmInput("");
+                    }}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     className="btn btn-danger"
-                    onClick={handleDelete}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete();
+                    }}
                   >
                     Delete
                   </button>
@@ -579,22 +744,41 @@ const Tasks = ({ users }) => {
           </div>
         )}
 
-        {/* Update Task Modal */}
         {showUpdateModal && (
           <div
             className="modal fade show d-block"
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
             tabIndex="-1"
             role="dialog"
+            onClick={() => {
+              setShowUpdateModal(false);
+              setTaskToUpdate(null);
+              setUpdateTitle("");
+              setUpdateDescription("");
+              setUpdateDeadline("");
+              setUpdateAssignedUserIds([]);
+            }}
           >
-            <div className="modal-dialog" role="document">
+            <div
+              className="modal-dialog"
+              role="document"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="modal-content bg-dark text-white">
                 <div className="modal-header">
                   <h5 className="modal-title">Update Task</h5>
                   <button
                     type="button"
                     className="btn-close btn-close-white"
-                    onClick={() => setShowUpdateModal(false)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowUpdateModal(false);
+                      setTaskToUpdate(null);
+                      setUpdateTitle("");
+                      setUpdateDescription("");
+                      setUpdateDeadline("");
+                      setUpdateAssignedUserIds([]);
+                    }}
                   ></button>
                 </div>
                 <div className="modal-body">
@@ -701,7 +885,15 @@ const Tasks = ({ users }) => {
                       <button
                         type="button"
                         className="btn btn-secondary"
-                        onClick={() => setShowUpdateModal(false)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowUpdateModal(false);
+                          setTaskToUpdate(null);
+                          setUpdateTitle("");
+                          setUpdateDescription("");
+                          setUpdateDeadline("");
+                          setUpdateAssignedUserIds([]);
+                        }}
                       >
                         Cancel
                       </button>
@@ -710,6 +902,46 @@ const Tasks = ({ users }) => {
                       </button>
                     </div>
                   </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDescriptionModal && (
+          <div
+            className="modal fade show d-block"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+            tabIndex="-1"
+            role="dialog"
+            onClick={() => {
+              setShowDescriptionModal(false);
+              setSelectedTaskDescription("");
+            }}
+          >
+            <div
+              className="modal-dialog"
+              role="document"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-content bg-dark text-white">
+                <div className="modal-header">
+                  <h5 className="modal-title">Task Description</h5>
+                  <button
+                    type="button"
+                    className="btn-close btn-close-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDescriptionModal(false);
+                      setSelectedTaskDescription("");
+                    }}
+                  ></button>
+                </div>
+                <div
+                  className="modal-body"
+                  style={{ maxHeight: "400px", overflowY: "auto" }}
+                >
+                  <p>{selectedTaskDescription}</p>
                 </div>
               </div>
             </div>
