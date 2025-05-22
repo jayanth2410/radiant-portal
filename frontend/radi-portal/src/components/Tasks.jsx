@@ -325,7 +325,10 @@ const Tasks = ({ users }) => {
     }
   });
   const completedTasks = tasks.filter((task) => {
-    if (task.status === "completed" || task.status === "completed after deadline") {
+    if (
+      task.status === "completed" ||
+      task.status === "completed after deadline"
+    ) {
       return task;
     }
   });
@@ -498,12 +501,12 @@ const Tasks = ({ users }) => {
         </div>
 
         <div className="card bg-dark text-white p-4 mb-4">
-          <h4 className="card-title text-white mb-3">Task List</h4>
+          <h4 className="card-title text-white mb-3">On Going Tasks</h4>
           <div className="table-responsive">
             <table className="table table-dark table-hover mb-0">
               <thead>
                 <tr>
-                  <th style={{ width: "20%" }}>Title</th>
+                  <th style={{ width: "20%", textAlign: "left" }}>Title</th>
                   <th>Description</th>
                   <th>Assigned Users</th>
                   <th>Deadline</th>
@@ -518,7 +521,7 @@ const Tasks = ({ users }) => {
                       .map((user) => user.fullName || "Unknown User")
                       .join(", ");
                     return (
-                      <tr key={task._id}>
+                      <tr style={{ textAlign: "left" }} key={task._id}>
                         <td>{task.title}</td>
                         <td>
                           <button
@@ -528,6 +531,7 @@ const Tasks = ({ users }) => {
                             }
                             style={{
                               whiteSpace: "normal",
+
                               overflowWrap: "break-word",
                             }}
                           >
@@ -550,7 +554,13 @@ const Tasks = ({ users }) => {
                         <td>
                           <span
                             className={`badge ${
-                              task.completed ? "bg-success" : "bg-info"
+                              task.status === "in progress"
+                                ? "bg-info"
+                                : task.status === "testing"
+                                ? "bg-secondary"
+                                : task.status === "resolved"
+                                ? "bg-warning"
+                                : "bg-light"
                             }`}
                           >
                             {task.status}
@@ -637,10 +647,14 @@ const Tasks = ({ users }) => {
                         <td>
                           <span
                             className={`badge ${
-                              task.status === "completed" ? "bg-success" : "bg-danger"
+                              task.status === "completed"
+                                ? "bg-success"
+                                : "bg-danger"
                             }`}
                           >
-                            {task.status === "completed" ? "completed" :"delayed"}
+                            {task.status === "completed"
+                              ? "completed"
+                              : "delayed"}
                           </span>
                         </td>
                       </tr>
