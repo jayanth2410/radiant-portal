@@ -1,522 +1,810 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { FaEdit } from "react-icons/fa";
+import ReactCrop from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
+import { toast, ToastContainer } from "react-toastify";
+import defaultProfile from "../assets/default-profile.jpg"; // Default profile image
 
 const Profile = () => {
-  const [certifications, setCertifications] = useState([]);
-  const [newCertification, setNewCertification] = useState({
-    title: "",
-    image: "",
-    skills: [],
-  });
-  const [newSkill, setNewSkill] = useState("");
-  const [showAddCertification, setShowAddCertification] = useState(false);
-
-  const [projects, setProjects] = useState([]);
-  const [newProject, setNewProject] = useState({
-    title: "",
+  const [profile, setProfile] = useState({
+    profilePicture: "",
+    name: "",
+    id: "",
     role: "",
-    description: "",
-    startDate: "",
-    endDate: "",
-    techUsed: [],
+    dob: "",
+    phone: "",
+    personalEmail: "",
+    emergencyContact: "",
+    bloodGroup: "",
+    address: "",
+    yearsOfExperience: "",
   });
-  const [newTech, setNewTech] = useState("");
-  const [showAddProject, setShowAddProject] = useState(false);
 
-  const handleAddCertification = () => {
-    if (!newCertification.title) {
-      alert("Please enter the certification title.");
-      return;
-    }
-    setCertifications([newCertification, ...certifications]);
-    setNewCertification({ title: "", image: "", skills: [] });
-    setShowAddCertification(false);
-  };
+  const [isEditing, setIsEditing] = useState(false); // New state for edit mode
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [crop, setCrop] = useState({
+    unit: "px",
+    width: 150,
+    height: 150,
+    aspect: 1,
+    x: 0,
+    y: 0,
+  });
+  const [croppedImage, setCroppedImage] = useState(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageRef, setImageRef] = useState(null);
 
-  const handleDeleteCertification = (title) => {
-    const confirmation = prompt(
-      `To delete the certification, type its name: "${title}"`
-    );
-    if (confirmation === title) {
-      setCertifications(certifications.filter((cert) => cert.title !== title));
-    } else {
-      alert("Certification name did not match. Deletion canceled.");
-    }
-  };
+  // Define field order and display labels
+  const fieldOrder = [
+    { key: "id", label: "ID", type: "text" },
+    { key: "role", label: "Role", type: "text" },
+    { key: "dob", label: "Date of Birth", type: "date" },
+    { key: "phone", label: "Phone", type: "text" },
+    { key: "personalEmail", label: "Personal Email", type: "email" },
+    { key: "emergencyContact", label: "Emergency Contact", type: "text" },
+    { key: "bloodGroup", label: "Blood Group", type: "text" },
+    { key: "address", label: "Address", type: "text" },
+    { key: "yearsOfExperience", label: "Years of Experience", type: "number" },
+  ];
 
-  const handleEditCertification = (index) => {
-    const certToEdit = certifications[index];
-    setNewCertification(certToEdit);
-    setShowAddCertification(true);
-    // Remove the certification being edited from the list temporarily
-    setCertifications(certifications.filter((_, i) => i !== index));
-  };
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
 
-  const handleAddSkill = () => {
-    if (newSkill.trim()) {
-      setNewCertification({
-        ...newCertification,
-        skills: [...newCertification.skills, newSkill.trim()],
-      });
-      setNewSkill("");
-    }
-  };
+        const data = await response.json();
+        if (response.ok) {
+          console.log("[DEBUG] Fetched profile data:", {
+            fullName: data.fullName,
+            profilePicture: data.profilePicture ? "base64 string" : "null",
+            id: data.id,
+            role: data.role,
+            bloodGroup: data.bloodGroup,
+            personalEmail: data.personalEmail,
+            emergencyContact: data.emergencyContact,
+          });
+          setProfile({
+            profilePicture: data.profilePicture || defaultProfile,
+            name: data.fullName,
+            id: data.id || "not-set",
+            role: data.role || "not-set",
+            dob: formatDate(data.dateOfBirth),
+            phone: data.phone || "not-set",
+            personalEmail: data.personalEmail || "not-set",
+            emergencyContact: data.emergencyContact || "not-set",
+            bloodGroup: data.bloodGroup || "not-set",
+            address: data.address || "not-set",
+            yearsOfExperience: data.yearsOfExperience || "0",
+          });
+        } else {
+          console.log("[DEBUG] Failed to load profile:", data.message);
+          setError(data.message || "Failed to load profile data.");
+        }
+      } catch (err) {
+        console.error("[ERROR] Fetching profile:", err.message);
+        setError("An error occurred while fetching profile data.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleRemoveSkill = (index) => {
-    setNewCertification({
-      ...newCertification,
-      skills: newCertification.skills.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleAddProject = () => {
-    if (
-      !newProject.title ||
-      !newProject.description ||
-      !newProject.startDate ||
-      !newProject.endDate
-    ) {
-      alert("Please fill in all the required fields.");
-      return;
-    }
-    setProjects([newProject, ...projects]);
-    setNewProject({
-      title: "",
-      role: "",
-      description: "",
-      startDate: "",
-      endDate: "",
-      techUsed: [],
-    });
-    setShowAddProject(false);
-  };
-
-  const handleDeleteProject = (title) => {
-    const confirmation = prompt(
-      `To delete the project, type its name: "${title}"`
-    );
-    if (confirmation === title) {
-      setProjects(projects.filter((proj) => proj.title !== title));
-    } else {
-      alert("Project name did not match. Deletion canceled.");
-    }
-  };
-
-  const handleEditProject = (index) => {
-    const projToEdit = projects[index];
-    setNewProject(projToEdit);
-    setShowAddProject(true);
-    // Remove the project being edited from the list temporarily
-    setProjects(projects.filter((_, i) => i !== index));
-  };
-
-  const handleAddTech = () => {
-    if (newTech.trim()) {
-      setNewProject({
-        ...newProject,
-        techUsed: [...newProject.techUsed, newTech.trim()],
-      });
-      setNewTech("");
-    }
-  };
-
-  const handleRemoveTech = (index) => {
-    setNewProject({
-      ...newProject,
-      techUsed: newProject.techUsed.filter((_, i) => i !== index),
-    });
-  };
+    fetchProfile();
+  }, []);
 
   const formatDate = (dateString) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB"); // "en-GB" formats the date as dd/mm/yyyy
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${year}-${month}-${day}`; // Changed to YYYY-MM-DD for input type="date"
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfile({ ...profile, [name]: value });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      console.log("[DEBUG] File selected:", {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      });
+      const reader = new FileReader();
+      reader.onload = () => {
+        setSelectedImage(reader.result);
+        setShowCropModal(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const getCroppedImg = useCallback(async () => {
+    if (!imageRef || !crop.width || !crop.height) {
+      console.log("[DEBUG] Cannot crop: imageRef or crop dimensions missing");
+      return null;
+    }
+
+    const canvas = document.createElement("canvas");
+    const scaleX = imageRef.naturalWidth / imageRef.width;
+    const scaleY = imageRef.naturalHeight / imageRef.height;
+    const targetSize = 200;
+    canvas.width = targetSize;
+    canvas.height = targetSize;
+    const ctx = canvas.getContext("2d");
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    ctx.drawImage(
+      imageRef,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      targetSize,
+      targetSize
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            console.log("[DEBUG] Cropped image blob created:", {
+              size: blob.size,
+              type: blob.type,
+            });
+            resolve(blob);
+          } else {
+            console.log("[DEBUG] Failed to create cropped blob");
+            resolve(null);
+          }
+        },
+        "image/jpeg",
+        1.0
+      );
+    });
+  }, [imageRef, crop]);
+
+  const handleCropComplete = async () => {
+    const croppedBlob = await getCroppedImg();
+    if (croppedBlob) {
+      const croppedUrl = URL.createObjectURL(croppedBlob);
+      console.log("[DEBUG] Cropped image URL created:", croppedUrl);
+      setCroppedImage(croppedBlob);
+      setProfile({ ...profile, profilePicture: croppedUrl });
+      setShowCropModal(false);
+    } else {
+      setError("Failed to crop the image.");
+    }
+  };
+
+  const handleUpdateProfilePicture = async () => {
+    if (!croppedImage) {
+      console.log("[DEBUG] No cropped image to upload");
+      setError("No cropped image to upload.");
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append("profilePicture", croppedImage, "profile.jpg");
+      console.log("[DEBUG] Sending profile picture to backend");
+
+      const response = await fetch(
+        "http://localhost:5000/api/auth/update-profile",
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+      console.log("[DEBUG] Update profile response:", {
+        ok: response.ok,
+        data,
+      });
+
+      if (response.ok) {
+        toast.success("Profile picture updated successfully!", {
+          autoClose: 1000,
+        });
+        setCroppedImage(null);
+
+        const updatedProfileResponse = await fetch(
+          "http://localhost:5000/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const updatedProfileData = await updatedProfileResponse.json();
+        if (updatedProfileResponse.ok) {
+          console.log("[DEBUG] Refreshed profile data:", {
+            fullName: updatedProfileData.fullName,
+            profilePicture: updatedProfileData.profilePicture
+              ? "base64 string"
+              : "null",
+          });
+          setProfile({
+            profilePicture: updatedProfileData.profilePicture || defaultProfile,
+            name: updatedProfileData.fullName,
+            id: updatedProfileData.id || "not-set",
+            role: updatedProfileData.role || "not-set",
+            dob: formatDate(updatedProfileData.dateOfBirth),
+            phone: updatedProfileData.phone || "not-set",
+            personalEmail: updatedProfileData.personalEmail || "not-set",
+            emergencyContact: updatedProfileData.emergencyContact || "not-set",
+            bloodGroup: updatedProfileData.bloodGroup || "not-set",
+            address: updatedProfileData.address || "not-set",
+            yearsOfExperience: updatedProfileData.yearsOfExperience || "0",
+          });
+        } else {
+          setError("Failed to refresh profile data.");
+        }
+      } else {
+        console.log("[DEBUG] Failed to update profile picture:", data.message);
+        setError(data.message || "Failed to update profile picture.");
+      }
+    } catch (err) {
+      console.error("[ERROR] Updating profile picture:", err.message);
+      setError("An error occurred while updating the profile picture.");
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    console.log("[DEBUG] Updating profile with fields-----:", profile);
+    const mobileRegex = /^[6-9]\d{9}$/;
+    const isValidMobile = mobileRegex.test(profile.phone);
+    if (!isValidMobile) {
+      toast.error(
+        "Invalid mobile number format. Must start with 6-9 and be 10 digits long.",
+        {
+          autoClose: 3000,
+        }
+      );
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValidEmail = emailRegex.test(profile.personalEmail);
+    if (!isValidEmail) {
+      toast.error("Invalid email format.", {
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    try {
+      const updates = {
+        fullName: profile.name,
+        dateOfBirth: profile.dob ? new Date(profile.dob).toISOString() : null,
+        phone: profile.phone,
+        personalEmail: profile.personalEmail,
+        emergencyContact: profile.emergencyContact,
+        bloodGroup: profile.bloodGroup,
+        address: profile.address,
+        yearsOfExperience: profile.yearsOfExperience,
+        role: profile.role,
+        id: profile.id,
+      };
+
+      // Remove null or unchanged fields
+      Object.keys(updates).forEach(
+        (key) => updates[key] == null && delete updates[key]
+      );
+
+      const response = await fetch(
+        "http://localhost:5000/api/auth/update-profile",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(updates),
+        }
+      );
+
+      const data = await response.json();
+      console.log("[DEBUG] Update profile response:", {
+        ok: response.ok,
+        data,
+      });
+
+      if (response.ok) {
+        toast.success("Profile updated successfully!", {
+          autoClose: 1000,
+        });
+        setIsEditing(false);
+
+        const updatedProfileResponse = await fetch(
+          "http://localhost:5000/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const updatedProfileData = await updatedProfileResponse.json();
+        if (updatedProfileResponse.ok) {
+          console.log("[DEBUG] Refreshed profile data after update:", {
+            fullName: updatedProfileData.fullName,
+            profilePicture: updatedProfileData.profilePicture
+              ? "base64 string"
+              : "null",
+          });
+          setProfile({
+            profilePicture: updatedProfileData.profilePicture || defaultProfile,
+            name: updatedProfileData.fullName,
+            id: updatedProfileData.id || "not-set",
+            role: updatedProfileData.role || "not-set",
+            dob: formatDate(updatedProfileData.dateOfBirth),
+            phone: updatedProfileData.phone || "not-set",
+            personalEmail: updatedProfileData.personalEmail || "not-set",
+            emergencyContact: updatedProfileData.emergencyContact || "not-set",
+            bloodGroup: updatedProfileData.bloodGroup || "not-set",
+            address: updatedProfileData.address || "not-set",
+            yearsOfExperience: updatedProfileData.yearsOfExperience || "0",
+          });
+        } else {
+          setError("Failed to refresh profile data.");
+        }
+      } else {
+        console.log("[DEBUG] Failed to update profile:", data.message);
+        setError(data.message || "Failed to update profile.");
+      }
+    } catch (err) {
+      console.error("[ERROR] Updating profile:", err.message);
+      setError("An error occurred while updating the profile.");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          setProfile({
+            profilePicture: data.profilePicture || defaultProfile,
+            name: data.fullName,
+            id: data.id || "not-set",
+            role: data.role || "not-set",
+            dob: formatDate(data.dateOfBirth),
+            phone: data.phone || "not-set",
+            personalEmail: data.personalEmail || "not-set",
+            emergencyContact: data.emergencyContact || "not-set",
+            bloodGroup: data.bloodGroup || "not-set",
+            address: data.address || "not-set",
+            yearsOfExperience: data.yearsOfExperience || "0",
+          });
+        }
+      } catch (err) {
+        console.error("[ERROR] Refetching profile on cancel:", err.message);
+      }
+    };
+
+    fetchProfile();
+    setIsEditing(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <h2>Loading...</h2>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <h2>{error}</h2>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ backgroundColor: "#000", color: "#fff" }}>
-      <div className="container py-4">
-        {/* Header */}
-        <div className="row mb-4">
-          <div className="col-md-6">
-            <div className="d-flex align-items-center">
-              <div
-                className="rounded-circle"
+    <div>
+      <h2
+        className="mb-4 text-white fw-bold"
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
+        <i class="bi bi-person-fill"></i>
+        My Profile
+      </h2>
+
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover={false}
+        theme="dark"
+      />
+
+      {/* Profile Picture Card */}
+      <div
+        className="card bg-dark text-white mb-4 shadow-lg"
+        style={{
+          border: "none",
+          background: "linear-gradient(135deg, #1f1f1f 0%, #2c2c2c 100%)",
+          borderRadius: "12px",
+          transition: "transform 0.2s ease",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.01)")}
+        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
+        <div className="card-body p-4 d-flex align-items-center flex-wrap gap-3">
+          <div
+            className="rounded-circle position-relative"
+            style={{
+              width: "100px",
+              height: "100px",
+              overflow: "hidden",
+              backgroundColor: "#333",
+              border: "3px solid transparent",
+              backgroundImage: "linear-gradient(45deg, #7c3aed, #db2777)",
+              padding: "2px",
+            }}
+          >
+            {profile.profilePicture ? (
+              <img
+                src={profile.profilePicture}
+                alt="Profile"
                 style={{
-                  width: "60px",
-                  height: "60px",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  borderRadius: "50%",
                   backgroundColor: "#333",
                 }}
+                onError={(e) => {
+                  console.log(
+                    "[DEBUG] Image failed to load:",
+                    profile.profilePicture
+                  );
+                  e.target.src = "https://via.placeholder.com/100?text=Error";
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                  color: "#fff",
+                  fontSize: "0.8rem",
+                  textAlign: "center",
+                  fontFamily: "'Roboto', sans-serif",
+                }}
               >
-                {/* User Icon */}
+                Not Updated
               </div>
-              <div className="ms-3">
-                <h4>Name</h4>
-                <p>EmployeeID</p>
-              </div>
-            </div>
+            )}
           </div>
-          <div className="col-md-6 text-end">
-            <h4>Role</h4>
-            <p>Experience (Years)</p>
-          </div>
-        </div>
-
-        {/* Certifications Section */}
-        <div className="mb-5">
-          <h2>Certifications</h2>
-
-          {/* List of Certifications */}
-          {certifications.map((cert, index) => (
-            <div
-              key={index}
-              className="card bg-dark text-white p-3 mb-2 position-relative"
-            >
-              <button
-                type="button"
-                className="btn-close btn-close-white position-absolute top-0 end-0 m-2"
-                aria-label="Close"
-                onClick={() => handleDeleteCertification(cert.title)}
-              ></button>
-              <h3>{cert.title}</h3>
-              {cert.image && (
-                <img
-                  src={cert.image}
-                  alt={cert.title}
-                  style={{ maxWidth: "100px", maxHeight: "100px" }}
-                  className="mb-2"
-                />
-              )}
-              <div>
-                {cert.skills.map((skill, index) => (
-                  <span key={index} className="badge bg-primary me-2">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-              <button
-                className="btn btn-sm btn-danger position-absolute bottom-0 end-0 m-2"
-                onClick={() => handleEditCertification(index)}
-                style={{ width: "7rem" }}
-              >
-                Edit
-              </button>
-            </div>
-          ))}
-
-          {/* Add Certification Form */}
-          {showAddCertification && (
-            <div className="mb-3">
-              <h2 className="text-center">Add Certification</h2>
-              <div className="mb-2">
-                <label htmlFor="certificationTitle" className="form-label">
-                  Certification Title
-                </label>
-                <input
-                  id="certificationTitle"
-                  type="text"
-                  className="form-control bg-dark text-white"
-                  placeholder="Enter Certification Title (e.g., Java Certification)"
-                  value={newCertification.title}
-                  onChange={(e) =>
-                    setNewCertification({
-                      ...newCertification,
-                      title: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="mb-2">
-                <label htmlFor="certificationImage" className="form-label">
-                  Certification Image URL
-                </label>
-                <input
-                  id="certificationImage"
-                  type="text"
-                  className="form-control bg-dark text-white"
-                  placeholder="Enter Image URL (optional)"
-                  value={newCertification.image}
-                  onChange={(e) =>
-                    setNewCertification({
-                      ...newCertification,
-                      image: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="mb-2">
-                <label htmlFor="certificationSkill" className="form-label">
-                  Skills
-                </label>
-                <input
-                  id="certificationSkill"
-                  type="text"
-                  className="form-control bg-dark text-white"
-                  placeholder="Enter Skill (e.g., Java, OOPs, Multithreading)"
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                />
-                <button
-                  className="btn btn-primary mt-2"
-                  onClick={handleAddSkill}
-                >
-                  + Add Skill
-                </button>
-              </div>
-              {/* Skills List */}
-              <div className="mb-2 d-flex flex-wrap gap-2">
-                {newCertification.skills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="badge bg-dark d-flex align-items-center"
-                    style={{ padding: "0.5rem 1rem", borderRadius: "1rem" }}
-                  >
-                    {skill}
-                    <button
-                      type="button"
-                      className="btn-close btn-close-white ms-2"
-                      style={{ fontSize: "0.8rem" }}
-                      aria-label="Remove"
-                      onClick={() => handleRemoveSkill(index)}
-                    ></button>
-                  </span>
-                ))}
-              </div>
-              <label></label>
-              <button
-                className="btn btn-success"
-                onClick={handleAddCertification}
-                style={{ width: "10rem", marginTop: "2rem" }}
-              >
-                Confirm
-              </button>
-              <button
-                className="btn btn-secondary ms-2"
-                onClick={() => setShowAddCertification(false)}
-                style={{ width: "10rem", marginTop: "2rem" }}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-          {!showAddCertification && (
-            <button
-              className="btn mt-2 mb-3"
-              style={{ backgroundColor: "#7c3aed", color: "#fff" }}
-              onClick={() => setShowAddCertification(true)}
-            >
-              + Add Certification
-            </button>
-          )}
-        </div>
-
-        {/* Projects Section */}
-        <div className="mb-5">
-          <h2>Projects</h2>
-
-          {/* List of Projects */}
-          {projects.map((proj, index) => (
-            <div
-              key={index}
-              className="card bg-dark text-white position-relative mb-3"
+          <div className="d-flex flex-column">
+            <h5
+              className="mb-2 text-white"
               style={{
-                padding: "1rem",
-                borderRadius: "0.5rem",
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 600,
+                fontSize: "1.2rem",
               }}
             >
-              <button
-                type="button"
-                className="btn-close btn-close-white position-absolute top-0 end-0 m-2"
-                aria-label="Close"
-                onClick={() => handleDeleteProject(proj.title)}
-              ></button>
-              <div className="card-body">
-                <h3 className="card-title" style={{ color: "#f8f9fa" }}>
-                  {proj.title}
-                </h3>
-                <p
-                  className="card-text"
-                  style={{ color: "#b5b5b5", fontSize: "0.8rem" }}
-                >
-                  <i className="bi bi-calendar3" style={{ color: "#fff" }}></i>{" "}
-                  {/* Bootstrap Icon */}
-                  {` ${formatDate(proj.startDate)} - ${formatDate(
-                    proj.endDate
-                  )}`}
-                </p>
-                <p
-                  className="card-text"
-                  style={{ color: "#d1d1d1", fontSize: "1rem" }}
-                >
-                  Role: {proj.role || "N/A"}
-                </p>
-                <p
-                  className="card-text"
-                  style={{ color: "#d1d1d1", fontSize: "0.9rem" }}
-                >
-                  {proj.description}
-                </p>
-                <div className="d-flex gap-2 flex-wrap mt-2">
-                  {proj.techUsed.map((tech, index) => (
-                    <span key={index} className="badge bg-primary">
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <button
-                className="btn btn-sm btn-danger position-absolute bottom-0 end-0 m-2"
-                onClick={() => handleEditProject(index)}
-                style={{ width: "7rem" }}
+              {profile.name || "User"}
+            </h5>
+            <div className="d-flex gap-2">
+              <label
+                className="btn btn-sm px-3 py-1"
+                style={{
+                  backgroundColor: "#7c3aed",
+                  color: "#fff",
+                  fontFamily: "'Roboto', sans-serif",
+                  fontSize: "0.85rem",
+                  borderRadius: "8px",
+                  transition: "background-color 0.2s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#6b32cc")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#7c3aed")
+                }
               >
-                Edit
-              </button>
-            </div>
-          ))}
-
-          {/* Add Project Form */}
-          {showAddProject && (
-            <div className="mb-3">
-              <h2 className="text-center">Add Project</h2>
-
-              <div className="mb-2">
-                <label htmlFor="projectTitle" className="form-label">
-                  Project Title
-                </label>
+                Upload
                 <input
-                  id="projectTitle"
-                  type="text"
-                  className="form-control bg-dark text-white"
-                  placeholder="Enter Project Title (e.g., E-commerce Platform)"
-                  value={newProject.title}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, title: e.target.value })
-                  }
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
                 />
-              </div>
-              <div className="mb-2">
-                <label htmlFor="projectRole" className="form-label">
-                  Role
-                </label>
-                <input
-                  id="projectRole"
-                  type="text"
-                  className="form-control bg-dark text-white"
-                  placeholder="Enter Role (e.g., Developer, Team Lead)"
-                  value={newProject.role || ""}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, role: e.target.value })
-                  }
-                />
-              </div>
-              <div className="mb-2">
-                <label htmlFor="projectDescription" className="form-label">
-                  Project Description
-                </label>
-                <textarea
-                  id="projectDescription"
-                  className="form-control bg-dark text-white"
-                  placeholder="Enter Project Description"
-                  value={newProject.description}
-                  onChange={(e) =>
-                    setNewProject({
-                      ...newProject,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="mb-2">
-                <label htmlFor="projectStartDate" className="form-label">
-                  Start Date
-                </label>
-                <input
-                  id="projectStartDate"
-                  type="date"
-                  className="form-control bg-dark text-white"
-                  value={newProject.startDate}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, startDate: e.target.value })
-                  }
-                />
-              </div>
-              <div className="mb-2">
-                <label htmlFor="projectEndDate" className="form-label">
-                  End Date
-                </label>
-                <input
-                  id="projectEndDate"
-                  type="date"
-                  className="form-control bg-dark text-white"
-                  value={newProject.endDate}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, endDate: e.target.value })
-                  }
-                />
-              </div>
-              <div className="mb-2">
-                <label htmlFor="projectTech" className="form-label">
-                  Technologies Used
-                </label>
-                <input
-                  id="projectTech"
-                  type="text"
-                  className="form-control bg-dark text-white"
-                  placeholder="Enter Technology (e.g., React, Node.js)"
-                  value={newTech}
-                  onChange={(e) => setNewTech(e.target.value)}
-                />
+              </label>
+              {croppedImage && (
                 <button
-                  className="btn btn-primary mt-2"
-                  onClick={handleAddTech}
+                  className="btn btn-sm px-3 py-1"
+                  style={{
+                    backgroundColor: "#28a745",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    fontSize: "0.85rem",
+                    borderRadius: "8px",
+                    transition: "background-color 0.2s ease",
+                  }}
+                  onClick={handleUpdateProfilePicture}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#218838")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#28a745")
+                  }
                 >
-                  + Add Technology
+                  Update
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Personal Information Card */}
+      <div
+        className="card bg-dark text-white shadow-lg"
+        style={{
+          border: "1px solid #444",
+          borderRadius: "12px",
+        }}
+      >
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5
+              className="text-white"
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 600,
+                fontSize: "1.1rem",
+              }}
+            >
+              Personal Information
+            </h5>
+            {!isEditing && (
+              <button
+                className="btn btn-sm px-3 py-1 d-flex align-items-center"
+                style={{
+                  backgroundColor: "#7c3aed",
+                  color: "#fff",
+                  fontFamily: "'Roboto', sans-serif",
+                  borderRadius: "8px",
+                }}
+                onClick={() => setIsEditing(true)}
+              >
+                <FaEdit className="me-1" /> Edit
+              </button>
+            )}
+          </div>
+          {isEditing ? (
+            <div className="row g-3">
+              {fieldOrder.map(({ key, label, type }) => (
+                <div className="col-md-6" key={key}>
+                  <label
+                    htmlFor={key}
+                    className="form-label text-capitalize small mb-1"
+                    style={{
+                      color: "#e2e8f0",
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {label}
+                  </label>
+                  <input
+                    type={type}
+                    id={key}
+                    name={key}
+                    className="form-control bg-dark text-white"
+                    value={profile[key]}
+                    onChange={handleInputChange}
+                    style={{
+                      fontSize: "0.9rem",
+                      padding: "0.5rem",
+                      border: "1px solid #7c3aed",
+                      borderRadius: "8px",
+                      transition: "border-color 0.2s ease",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#db2777")}
+                    onBlur={(e) => (e.target.style.borderColor = "#7c3aed")}
+                  />
+                </div>
+              ))}
+              <div className="col-12 mt-4">
+                <button
+                  className="btn btn-sm px-3 py-1 me-2"
+                  style={{
+                    backgroundColor: "#28a745",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    borderRadius: "8px",
+                  }}
+                  onClick={handleUpdateProfile}
+                >
+                  Save
+                </button>
+                <button
+                  className="btn btn-sm px-3 py-1"
+                  style={{
+                    backgroundColor: "#dc3545",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    borderRadius: "8px",
+                  }}
+                  onClick={handleCancelEdit}
+                >
+                  Cancel
                 </button>
               </div>
-              {/* Technologies List */}
-              <div className="mb-2 d-flex flex-wrap gap-2">
-                {newProject.techUsed.map((tech, index) => (
-                  <span
-                    key={index}
-                    className="badge bg-dark d-flex align-items-center"
-                    style={{ padding: "0.5rem 1rem", borderRadius: "1rem" }}
-                  >
-                    {tech}
-                    <button
-                      type="button"
-                      className="btn-close btn-close-white ms-2"
-                      style={{ fontSize: "0.8rem" }}
-                      aria-label="Remove"
-                      onClick={() => handleRemoveTech(index)}
-                    ></button>
-                  </span>
-                ))}
-              </div>
-              <button
-                className="btn btn-success"
-                onClick={handleAddProject}
-                style={{ width: "10rem", marginTop: "2rem" }}
-              >
-                Confirm
-              </button>
-              <button
-                className="btn btn-secondary ms-2"
-                onClick={() => setShowAddProject(false)}
-                style={{ width: "10rem", marginTop: "2rem" }}
-              >
-                Cancel
-              </button>
             </div>
-          )}
-          {!showAddProject && (
-            <button
-              className="btn mt-2 mb-3"
-              style={{ backgroundColor: "#7c3aed", color: "#fff" }}
-              onClick={() => setShowAddProject(true)}
-            >
-              + Add Project
-            </button>
+          ) : (
+            <div className="row g-3">
+              {fieldOrder.map(({ key, label }) => (
+                <div className="col-md-6" key={key}>
+                  <label
+                    htmlFor={key}
+                    className="form-label text-capitalize small mb-1"
+                    style={{
+                      color: "#e2e8f0",
+                      fontFamily: "'Roboto', sans-serif",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {label}
+                  </label>
+                  <div
+                    className="form-control bg-dark text-white"
+                    style={{
+                      fontSize: "0.9rem",
+                      padding: "0.5rem",
+                      border: "1px solid #444",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    {profile[key] || (
+                      <span className="text-muted">Not updated</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
+
+      {/* Crop Modal */}
+      {showCropModal && (
+        <div
+          className="modal fade show"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            style={{ maxWidth: "350px" }}
+          >
+            <div
+              className="modal-content bg-dark text-white"
+              style={{ borderRadius: "12px" }}
+            >
+              <div className="modal-header border-0">
+                <h5
+                  className="modal-title"
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: "1.1rem",
+                  }}
+                >
+                  Crop Image
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowCropModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body" style={{ padding: "1rem" }}>
+                {selectedImage && (
+                  <div
+                    style={{
+                      width: "100%",
+                      maxWidth: "300px",
+                      margin: "0 auto",
+                    }}
+                  >
+                    <ReactCrop
+                      crop={crop}
+                      onChange={(newCrop) => setCrop(newCrop)}
+                      circularCrop
+                      aspect={1}
+                      keepSelection
+                      style={{ width: "100%", height: "auto" }}
+                    >
+                      <img
+                        src={selectedImage}
+                        alt="Crop"
+                        style={{
+                          maxWidth: "100%",
+                          height: "auto",
+                          display: "block",
+                        }}
+                        onLoad={(e) => {
+                          console.log("[DEBUG] Crop image loaded:", {
+                            naturalWidth: e.currentTarget.naturalWidth,
+                            naturalHeight: e.currentTarget.naturalHeight,
+                          });
+                          setImageRef(e.currentTarget);
+                        }}
+                      />
+                    </ReactCrop>
+                  </div>
+                )}
+              </div>
+              <div
+                className="modal-footer border-0"
+                style={{ padding: "0.5rem 1rem" }}
+              >
+                <button
+                  className="btn btn-sm px-2 py-1"
+                  style={{
+                    backgroundColor: "#dc3545",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    fontSize: "0.8rem",
+                    borderRadius: "8px",
+                  }}
+                  onClick={() => setShowCropModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-sm px-2 py-1"
+                  style={{
+                    backgroundColor: "#7c3aed",
+                    color: "#fff",
+                    fontFamily: "'Roboto', sans-serif",
+                    fontSize: "0.8rem",
+                    borderRadius: "8px",
+                  }}
+                  onClick={handleCropComplete}
+                >
+                  Crop
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

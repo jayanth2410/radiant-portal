@@ -1,29 +1,102 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 import "./Login.css";
-import microsoft_icon from '../assets/microsoft_icon.png';
+
+import microsoft_icon from "../assets/microsoft_icon.png";
+import { UserContext } from "./UserContext"; // ✅ updated path
 
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true); // Track which tab (Login/Signup) is active
+  const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
+  const { setUser } = useContext(UserContext); // ✅ get setUser from context
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+
+    const fullName = e.target.fullName.value;
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, email, password, category: "user" }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Sign up successful! Redirecting to login...");
+        setTimeout(() => setIsLogin(true), 2000);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (err) {
+      console.error("Signup error:", err);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        setUser(data.user); // ✅ set user in context
+        console.log("User data on 59 login:", data.user.category);
+
+        toast.success("Login successful! Redirecting...");
+        setTimeout(() => {
+          if (data.user.category === "admin") {
+            console.log("admin data", data.user);
+            navigate("/admin");
+          } else if (data.user.category === "user") {
+            console.log("user data", data.user);
+            navigate("/dashboard");
+          } else {
+            toast.error("Invalid user category.");
+          }
+        }, 2000);
+      } else {
+        toast.error(data.message || "Login failed.");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
 
   return (
+    <>
+     <ToastContainer
+            position="top-right"
+            autoClose={1000}
+            hideProgressBar
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover={false}
+            theme="dark"
+          />
     <div className="login-container">
       <div className="login-box">
-        <div className="login-icon">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="icon-svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-            />
-          </svg>
-        </div>
+        <div className="login-icon">{/* Your icon SVG here */}</div>
 
         <div className="tabs">
           <button
@@ -41,14 +114,14 @@ export default function LoginPage() {
         </div>
 
         {isLogin ? (
-          <form className="form-fields">
+          <form className="form-fields" onSubmit={handleLogin}>
             <div>
               <label>Email address</label>
-              <input type="email" placeholder="Enter your email" required/>
+              <input type="email" name="email" required />
             </div>
             <div>
               <label>Password</label>
-              <input type="password" placeholder="Enter your password" required/>
+              <input type="password" name="password" required />
             </div>
             <div className="options">
               <label>
@@ -59,22 +132,22 @@ export default function LoginPage() {
             <button className="sign-in-btn">Sign in</button>
           </form>
         ) : (
-          <form className="form-fields">
+          <form className="form-fields" onSubmit={handleSignup}>
             <div>
               <label>Full Name</label>
-              <input type="text" placeholder="Enter your full name" required/>
+              <input type="text" name="fullName" required />
             </div>
             <div>
               <label>Email address</label>
-              <input type="email" placeholder="Enter your email" required/>
+              <input type="email" name="email" required />
             </div>
             <div>
               <label>Password</label>
-              <input type="password" placeholder="Enter your password" required/>
+              <input type="password" name="password" required />
             </div>
             <div>
               <label>Confirm Password</label>
-              <input type="password" placeholder="Confirm your password" required/>
+              <input type="password" required />
             </div>
             <button className="sign-in-btn">Sign up</button>
           </form>
@@ -90,5 +163,6 @@ export default function LoginPage() {
         </button>
       </div>
     </div>
+    </>
   );
 }
