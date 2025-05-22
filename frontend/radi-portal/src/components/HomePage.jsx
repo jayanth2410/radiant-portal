@@ -484,7 +484,7 @@ const HomePage = () => {
                     <th style={{ width: "10%" }}>Assigned By</th>
                     {user && user.category === "admin" && (
                       <th style={{ width: "20%" }}>Assigned To</th>
-                    )}
+                    )} 
                     <th
                       style={{
                         width:
