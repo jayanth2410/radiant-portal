@@ -267,7 +267,26 @@ const Profile = () => {
   };
 
   const handleUpdateProfile = async () => {
-    console.log("[DEBUG] Updating profile with fields:", profile);
+    console.log("[DEBUG] Updating profile with fields-----:", profile);
+    const mobileRegex = /^[6-9]\d{9}$/;
+    const isValidMobile = mobileRegex.test(profile.phone);
+    if (!isValidMobile) {
+      toast.error(
+        "Invalid mobile number format. Must start with 6-9 and be 10 digits long.",
+        {
+          autoClose: 3000,
+        }
+      );
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValidEmail = emailRegex.test(profile.personalEmail);
+    if (!isValidEmail) {
+      toast.error("Invalid email format.", {
+        autoClose: 3000,
+      });
+      return;
+    }
 
     try {
       const updates = {
@@ -301,7 +320,10 @@ const Profile = () => {
       );
 
       const data = await response.json();
-      console.log("[DEBUG] Update profile response:", { ok: response.ok, data });
+      console.log("[DEBUG] Update profile response:", {
+        ok: response.ok,
+        data,
+      });
 
       if (response.ok) {
         toast.success("Profile updated successfully!", {
@@ -713,9 +735,7 @@ const Profile = () => {
               </div>
               <div className="modal-body" style={{ padding: "1rem" }}>
                 {selectedImage && (
-                 
-
- <div
+                  <div
                     style={{
                       width: "100%",
                       maxWidth: "300px",

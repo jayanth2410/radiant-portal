@@ -325,7 +325,7 @@ const Tasks = ({ users }) => {
     }
   });
   const completedTasks = tasks.filter((task) => {
-    if (task.status === "completed") {
+    if (task.status === "completed" || task.status === "completed after deadline") {
       return task;
     }
   });
@@ -596,7 +596,6 @@ const Tasks = ({ users }) => {
                   <th>Assigned Users</th>
                   <th>Deadline</th>
                   <th>Status</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -638,26 +637,18 @@ const Tasks = ({ users }) => {
                         <td>
                           <span
                             className={`badge ${
-                              task.completed ? "bg-success" : "bg-success"
+                              task.status === "completed" ? "bg-success" : "bg-danger"
                             }`}
                           >
-                            {task.status}
+                            {task.status === "completed" ? "completed" :"delayed"}
                           </span>
-                        </td>
-                        <td>
-                          <button
-                            className="btn btn-outline-danger btn-sm"
-                            onClick={() => initiateDelete(task._id)}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
                         </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center text-white">
+                    <td colSpan="5" className="text-center text-white">
                       No completed tasks found
                     </td>
                   </tr>

@@ -2,6 +2,81 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const verifyToken = require("../middleware/verifyToken");
+const mongoose = require("mongoose"); // Added to generate ObjectId
+
+router.post("/create-user-task", verifyToken, async (req, res) => {
+  const { title, description, deadline } = req.body;
+  const userId = req.user.id; // From verifyToken middleware
+
+  // Validate input
+  if (!title || !description || !deadline) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    // Find the current user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the admin user
+    const admin = await User.findOne({ category: "admin" });
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // Validate deadline format
+    const deadlineDate = new Date(deadline);
+    if (isNaN(deadlineDate.getTime())) {
+      return res.status(400).json({ message: "Invalid deadline format" });
+    }
+
+    // Create the task object for admin's tasksCreated (includes assignedTo)
+    const newTask = {
+      _id: new mongoose.Types.ObjectId(), // Generate a unique ID
+      title,
+      description,
+      deadline: deadlineDate,
+      assignedTo: [userId], // User is the assignee
+      assignedBy: userId,
+      status: "in progress",
+      completed: false,
+    };
+
+    // Add task to admin's tasksCreated array
+    admin.tasksCreated.push(newTask);
+    await admin.save();
+
+    // Create the task for the user's tasks array (excludes assignedTo)
+    const taskForUser = {
+      _id: newTask._id, // Use the same ID as admin's task
+      title,
+      description,
+      deadline: deadlineDate,
+      assignedBy: userId,
+      status: "in progress",
+      completed: false,
+    };
+
+    // Add task to the user's tasks array
+    user.tasks.push(taskForUser);
+    await user.save();
+
+    // Populate the assignedTo field for the response
+    await admin.populate("tasksCreated.assignedTo", "fullName");
+    const populatedTask = admin.tasksCreated.find(
+      (task) => task._id.toString() === newTask._id.toString()
+    );
+
+    res
+      .status(201)
+      .json({ message: "Task created successfully", task: populatedTask });
+  } catch (error) {
+    console.error("Error creating user task:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // Create a new task
 router.post("/create-task", verifyToken, async (req, res) => {
@@ -84,8 +159,8 @@ router.post("/create-task", verifyToken, async (req, res) => {
 // Fetch tasks for the logged-in user
 router.get("/", verifyToken, async (req, res) => {
   try {
-    // Define currentDate (01:06 PM IST on May 16, 2025)
-    const currentDate = new Date("2025-05-16T13:06:00+05:30");
+    // Define currentDate (03:56 PM IST on May 22, 2025)
+    const currentDate = new Date("2025-05-22T15:56:00+05:30");
 
     const user = await User.findById(req.user.id)
       .populate("tasksCreated.assignedTo", "fullName")
@@ -142,74 +217,92 @@ router.delete("/delete-task/:taskId", verifyToken, async (req, res) => {
 });
 
 // Update task status (for both users and admins)
+// Update task status (for both users and admins)
 router.put("/update-status/:taskId", verifyToken, async (req, res) => {
   try {
-    const { status, completed } = req.body;
+    const { status, completed, date } = req.body;
+    const { taskId } = req.params;
+    const userId = req.user.id; // From verifyToken middleware
 
-    if (!status || completed === undefined) {
+    if (!status || completed === undefined || !date) {
       return res
         .status(400)
-        .json({ message: "Status and completed fields are required" });
+        .json({ message: "Status, completed, and date fields are required" });
     }
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    // Convert date from body to Date object
+    const providedDate = new Date(date);
+
+    // Find the current user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Find the admin
+    const admin = await User.findOne({ category: "admin" });
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
 
     let task;
-    let admin;
 
     if (user.category === "admin") {
-      // Admin updating their tasksCreated
-      task = user.tasksCreated.id(req.params.taskId);
+      task = admin.tasksCreated.id(taskId);
       if (!task) {
         return res
           .status(404)
           .json({ message: "Task not found in admin's created tasks" });
       }
 
-      // Update the admin's task
-      task.status = status;
+      // Compare dates
+      if (completed && new Date(task.dueDate) < providedDate) {
+        console.log("Task resolved--------- after deadline");
+        task.status = "resolved after deadline";
+      } else if (task.status === "resolved after deadline") {
+        console.log(
+          "Task resolved--------- after deadl98689dw79878970897907ine"
+        );
+        task.status = "completed after deadline";
+      } else {
+        task.status = status;
+      }
+
       task.completed = completed;
 
-      // Find all users assigned to this task and update their tasks array
+      await admin.save();
+
       await User.updateMany(
-        { "tasks._id": req.params.taskId },
+        { "tasks._id": taskId },
         {
           $set: {
-            "tasks.$.status": status,
+            "tasks.$.status": task.status,
             "tasks.$.completed": completed,
           },
         }
       );
-
-      await user.save();
     } else {
-      // User updating their assigned tasks
-      task = user.tasks.id(req.params.taskId);
+      task = user.tasks.id(taskId);
       if (!task) {
         return res
           .status(404)
           .json({ message: "Task not found in user's tasks" });
       }
 
-      // Update the user's task
-      task.status = status;
-      task.completed = completed;
-
-      // Find the admin who assigned the task and update their tasksCreated
-      admin = await User.findById(task.assignedBy);
-      if (admin) {
-        const adminTask = admin.tasksCreated.id(req.params.taskId);
-        if (adminTask) {
-          adminTask.status = status;
-          adminTask.completed = completed;
-          await admin.save();
-        }
+      // Compare dates
+      if (completed && new Date(task.deadline) < providedDate) {
+        task.status = "resolved after deadline";
+      } else {
+        task.status = status;
       }
 
+      task.completed = completed;
       await user.save();
+
+      const adminTask = admin.tasksCreated.id(taskId);
+      if (adminTask) {
+        adminTask.status = task.status;
+        adminTask.completed = completed;
+        await admin.save();
+      } else {
+        console.warn(`Task ${taskId} not found in admin's tasksCreated`);
+      }
     }
 
     res.status(200).json({ message: "Task status updated successfully", task });

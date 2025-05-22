@@ -4,6 +4,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Certification from "./Certifications";
 import Projects from "./Projects";
 import Home from "./HomePage";
+import UserTasks from "./UserTasks"; // Import the new UserTasks component
+import ErrorBoundary from "./ErrorBoundary";
 import { UserContext } from "./UserContext";
 import defaultImage from "../assets/default-profile.jpg";
 import {
@@ -11,18 +13,24 @@ import {
   FaUser,
   FaCertificate,
   FaProjectDiagram,
+  FaTasks,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-// Define currentDate for display
+// Define currentDate for consistency
 const currentDate = new Date();
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Home");
-  const { user, loading: contextLoading } = useContext(UserContext);
+  const {
+    user,
+    loading: contextLoading,
+    refetchUser,
+  } = useContext(UserContext);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-
   const [profile, setProfile] = useState({
     profilePicture: "",
     name: "",
@@ -32,7 +40,6 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Set a timeout for the fetch request (10 seconds)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -46,6 +53,7 @@ const Dashboard = () => {
         clearTimeout(timeoutId);
 
         const data = await response.json();
+        console.log("User data from /api/auth/me:", data);
         if (response.ok) {
           setProfile({
             profilePicture: data.profilePicture || defaultImage,
@@ -96,7 +104,10 @@ const Dashboard = () => {
         </div>
         <h2>Loading...</h2>
         {fetchError && (
-          <p className="text-danger mt-3" style={{ maxWidth: "300px", textAlign: "center" }}>
+          <p
+            className="text-danger mt-3"
+            style={{ maxWidth: "300px", textAlign: "center" }}
+          >
             {fetchError}
           </p>
         )}
@@ -114,6 +125,8 @@ const Dashboard = () => {
         return <Certification />;
       case "Projects":
         return <Projects />;
+      case "Tasks":
+        return <UserTasks />;
       default:
         return <h2>Welcome back, {user?.fullName || "User"}!</h2>;
     }
@@ -124,7 +137,18 @@ const Dashboard = () => {
       className="d-flex min-vh-100"
       style={{ backgroundColor: "#000", color: "#fff" }}
     >
-      {/* Sidebar */}
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover={false}
+        theme="dark"
+      />
       <aside
         className="d-flex flex-column justify-content-between p-3"
         style={{
@@ -137,7 +161,6 @@ const Dashboard = () => {
           left: 0,
         }}
       >
-        {/* User Info */}
         <div>
           <div
             className="d-flex align-items-start mb-4 p-2 rounded"
@@ -231,7 +254,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Navigation Links */}
           <nav className="nav flex-column">
             <button
               className={`nav-link text-white d-flex align-items-center ${
@@ -289,10 +311,23 @@ const Dashboard = () => {
             >
               <FaProjectDiagram className="me-2" /> Projects
             </button>
+            <button
+              className={`nav-link text-white d-flex align-items-center ${
+                activeSection === "Tasks" ? "bg-dark rounded mb-2" : ""
+              }`}
+              style={{
+                padding: "10px",
+                transition: "background-color 0.1s ease",
+                border: "none",
+                background: "none",
+              }}
+              onClick={() => setActiveSection("Tasks")}
+            >
+              <FaTasks className="me-2" /> Tasks
+            </button>
           </nav>
         </div>
 
-        {/* Logout */}
         <div>
           <a
             href="/"
@@ -309,7 +344,6 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* Content Area */}
       <div
         className="container py-4 flex-grow-1"
         style={{
@@ -318,6 +352,7 @@ const Dashboard = () => {
           height: "100vh",
         }}
       >
+        {fetchError && <div className="alert alert-danger">{fetchError}</div>}
         {renderContent()}
       </div>
     </div>

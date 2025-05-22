@@ -209,18 +209,17 @@ router.put(
       const updates = req.body;
       console.log("[DEBUG] Update fields received:", updates);
 
-      if (updates.fullName) user.fullName = updates.fullName;
-      if (updates.dateOfBirth) user.dateOfBirth = new Date(updates.dateOfBirth);
-      if (updates.phone) user.phone = updates.phone;
-      if (updates.address) user.address = updates.address;
-      if (updates.yearsOfExperience)
-        user.yearsOfExperience = updates.yearsOfExperience;
-      if (updates.role) user.role = updates.role;
-      if (updates.bloodGroup) user.bloodGroup = updates.bloodGroup;
-      if (updates.emergencyContact)
-        user.emergencyContact = updates.emergencyContact;
-      if (updates.personalEmail) user.personalEmail = updates.personalEmail;
-      if (updates.id) user.id = updates.id;
+      user.fullName = updates.fullName;
+      user.dateOfBirth = new Date(updates.dateOfBirth);
+      user.phone = updates.phone;
+      user.address = updates.address;
+      user.yearsOfExperience = updates.yearsOfExperience;
+      user.role = updates.role;
+      user.bloodGroup = updates.bloodGroup;
+
+      user.emergencyContact = updates.emergencyContact;
+      user.personalEmail = updates.personalEmail;
+      user.id = updates.id;
 
       await user.save();
       console.log("[DEBUG] User updated successfully:", {

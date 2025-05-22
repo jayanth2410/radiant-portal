@@ -65,7 +65,7 @@ const userSchema = new mongoose.Schema({
         },
         status: {
           type: String,
-          enum: ["in progress", "testing", "resolved", "completed"],
+          enum: ["in progress", "testing", "resolved", "completed", "completed after deadline", "resolved after deadline"],
           default: "in progress",
         },
       },
@@ -85,7 +85,7 @@ const userSchema = new mongoose.Schema({
         },
         status: {
           type: String,
-          enum: ["in progress", "testing", "resolved", "completed"],
+          enum: ["in progress", "testing", "resolved", "completed", "completed after deadline", "resolved after deadline"],
           default: "in progress",
         },
       },

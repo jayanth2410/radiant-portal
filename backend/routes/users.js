@@ -5,10 +5,11 @@ const verifyToken = require("../middleware/verifyToken");
 
 // Fetch all users
 router.get("/", verifyToken, async (req, res) => {
+  console.log("1st")
   try {
     const users = await User.find(
       {},
-      "fullName email certifications skills yearsOfExperience category"
+      "_id fullName email certifications skills yearsOfExperience category"
     );
     res.status(200).json({ users }); // Wrap the array in an object
   } catch (err) {
@@ -18,6 +19,7 @@ router.get("/", verifyToken, async (req, res) => {
 });
 
 router.get("/", verifyToken, async (req, res) => {
+  console.log("2nd")
   try {
     const users = await User.find({ category: "user" }, "fullName _id");
     res.status(200).json({ users });
