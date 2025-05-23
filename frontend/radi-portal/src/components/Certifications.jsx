@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import { PiCertificate } from "react-icons/pi";
 
 const Certification = () => {
   const [certifications, setCertifications] = useState([]);
@@ -29,10 +30,7 @@ const Certification = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-      console.log(
-        "[DEBUG] Fetched certifications:",
-        response.data.certifications.length
-      );
+
       setCertifications(response.data.certifications || []);
     } catch (error) {
       console.error("[ERROR] Fetching certifications:", error.message);
@@ -48,7 +46,6 @@ const Certification = () => {
 
   const handleAddOrUpdateCertification = async () => {
     if (!newCertification.title || !newCertification.duration) {
-      console.log("[DEBUG] Validation failed: Title or duration missing");
       toast.error("Title and duration are required", {
         autoClose: 1000,
         theme: "dark",
@@ -76,7 +73,6 @@ const Certification = () => {
       let response;
       if (editId) {
         // Update certification
-        console.log("[DEBUG] Updating certification:", { certId: editId });
         response = await axios.put(
           `http://localhost:5000/api/certifications/${editId}`,
           formData,
@@ -98,7 +94,6 @@ const Certification = () => {
         });
       } else {
         // Create certification
-        console.log("[DEBUG] Creating new certification");
         response = await axios.post(
           "http://localhost:5000/api/certifications",
           formData,
@@ -136,7 +131,6 @@ const Certification = () => {
       `To delete the certification, type its name: "${title}"`
     );
     if (confirmation !== title) {
-      console.log("[DEBUG] Deletion canceled: Name mismatch");
       toast.error("Certification name did not match. Deletion canceled.", {
         autoClose: 1000,
         theme: "dark",
@@ -145,7 +139,6 @@ const Certification = () => {
     }
 
     try {
-      console.log("[DEBUG] Deleting certification:", { certId });
       await axios.delete(`http://localhost:5000/api/certifications/${certId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -167,7 +160,6 @@ const Certification = () => {
   };
 
   const handleEditCertification = (cert) => {
-    console.log("[DEBUG] Editing certification:", { certId: cert._id });
     setNewCertification({
       title: cert.title,
       duration: cert.duration,
@@ -203,11 +195,6 @@ const Certification = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log("[DEBUG] File selected:", {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      });
       const reader = new FileReader();
       reader.onload = () => {
         setNewCertification({
@@ -251,7 +238,7 @@ const Certification = () => {
         className="mb-4 text-white fw-bold"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
-        <i class="bi bi-patch-check-fill"></i> Certifications
+        <PiCertificate style={{ fontSize: "40px" }} /> Certifications
       </h2>
 
       {/* Add Certification Button */}
@@ -304,10 +291,6 @@ const Certification = () => {
                     borderTopRightRadius: "10px",
                   }}
                   onError={(e) => {
-                    console.log(
-                      "[DEBUG] Image failed to load:",
-                      cert.certificateImage
-                    );
                     e.target.src =
                       "https://via.placeholder.com/300x200?text=Error";
                   }}

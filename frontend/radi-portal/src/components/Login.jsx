@@ -57,15 +57,12 @@ export default function LoginPage() {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         setUser(data.user); // ✅ set user in context
-        console.log("User data on 59 login:", data.user.category);
 
         toast.success("Login successful! Redirecting...");
         setTimeout(() => {
           if (data.user.category === "admin") {
-            console.log("admin data", data.user);
             navigate("/admin");
           } else if (data.user.category === "user") {
-            console.log("user data", data.user);
             navigate("/dashboard");
           } else {
             toast.error("Invalid user category.");
@@ -75,7 +72,6 @@ export default function LoginPage() {
         toast.error(data.message || "Login failed.");
       }
     } catch (err) {
-      console.error("Login error:", err);
       toast.error("An error occurred. Please try again.");
     }
   };

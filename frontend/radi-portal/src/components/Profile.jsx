@@ -60,15 +60,6 @@ const Profile = () => {
 
         const data = await response.json();
         if (response.ok) {
-          console.log("[DEBUG] Fetched profile data:", {
-            fullName: data.fullName,
-            profilePicture: data.profilePicture ? "base64 string" : "null",
-            id: data.id,
-            role: data.role,
-            bloodGroup: data.bloodGroup,
-            personalEmail: data.personalEmail,
-            emergencyContact: data.emergencyContact,
-          });
           setProfile({
             profilePicture: data.profilePicture || defaultProfile,
             name: data.fullName,
@@ -83,7 +74,6 @@ const Profile = () => {
             yearsOfExperience: data.yearsOfExperience || "0",
           });
         } else {
-          console.log("[DEBUG] Failed to load profile:", data.message);
           setError(data.message || "Failed to load profile data.");
         }
       } catch (err) {
@@ -114,11 +104,6 @@ const Profile = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log("[DEBUG] File selected:", {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      });
       const reader = new FileReader();
       reader.onload = () => {
         setSelectedImage(reader.result);
@@ -130,7 +115,6 @@ const Profile = () => {
 
   const getCroppedImg = useCallback(async () => {
     if (!imageRef || !crop.width || !crop.height) {
-      console.log("[DEBUG] Cannot crop: imageRef or crop dimensions missing");
       return null;
     }
 
@@ -161,13 +145,8 @@ const Profile = () => {
       canvas.toBlob(
         (blob) => {
           if (blob) {
-            console.log("[DEBUG] Cropped image blob created:", {
-              size: blob.size,
-              type: blob.type,
-            });
             resolve(blob);
           } else {
-            console.log("[DEBUG] Failed to create cropped blob");
             resolve(null);
           }
         },
@@ -181,7 +160,6 @@ const Profile = () => {
     const croppedBlob = await getCroppedImg();
     if (croppedBlob) {
       const croppedUrl = URL.createObjectURL(croppedBlob);
-      console.log("[DEBUG] Cropped image URL created:", croppedUrl);
       setCroppedImage(croppedBlob);
       setProfile({ ...profile, profilePicture: croppedUrl });
       setShowCropModal(false);
@@ -192,14 +170,12 @@ const Profile = () => {
 
   const handleUpdateProfilePicture = async () => {
     if (!croppedImage) {
-      console.log("[DEBUG] No cropped image to upload");
       setError("No cropped image to upload.");
       return;
     }
     try {
       const formData = new FormData();
       formData.append("profilePicture", croppedImage, "profile.jpg");
-      console.log("[DEBUG] Sending profile picture to backend");
 
       const response = await fetch(
         "http://localhost:5000/api/auth/update-profile",
@@ -213,10 +189,6 @@ const Profile = () => {
       );
 
       const data = await response.json();
-      console.log("[DEBUG] Update profile response:", {
-        ok: response.ok,
-        data,
-      });
 
       if (response.ok) {
         toast.success("Profile picture updated successfully!", {
@@ -234,12 +206,6 @@ const Profile = () => {
         );
         const updatedProfileData = await updatedProfileResponse.json();
         if (updatedProfileResponse.ok) {
-          console.log("[DEBUG] Refreshed profile data:", {
-            fullName: updatedProfileData.fullName,
-            profilePicture: updatedProfileData.profilePicture
-              ? "base64 string"
-              : "null",
-          });
           setProfile({
             profilePicture: updatedProfileData.profilePicture || defaultProfile,
             name: updatedProfileData.fullName,
@@ -257,7 +223,6 @@ const Profile = () => {
           setError("Failed to refresh profile data.");
         }
       } else {
-        console.log("[DEBUG] Failed to update profile picture:", data.message);
         setError(data.message || "Failed to update profile picture.");
       }
     } catch (err) {
@@ -267,7 +232,6 @@ const Profile = () => {
   };
 
   const handleUpdateProfile = async () => {
-    console.log("[DEBUG] Updating profile with fields-----:", profile);
     const mobileRegex = /^[6-9]\d{9}$/;
     const isValidMobile = mobileRegex.test(profile.phone);
     if (!isValidMobile) {
@@ -320,10 +284,7 @@ const Profile = () => {
       );
 
       const data = await response.json();
-      console.log("[DEBUG] Update profile response:", {
-        ok: response.ok,
-        data,
-      });
+
 
       if (response.ok) {
         toast.success("Profile updated successfully!", {
@@ -341,12 +302,6 @@ const Profile = () => {
         );
         const updatedProfileData = await updatedProfileResponse.json();
         if (updatedProfileResponse.ok) {
-          console.log("[DEBUG] Refreshed profile data after update:", {
-            fullName: updatedProfileData.fullName,
-            profilePicture: updatedProfileData.profilePicture
-              ? "base64 string"
-              : "null",
-          });
           setProfile({
             profilePicture: updatedProfileData.profilePicture || defaultProfile,
             name: updatedProfileData.fullName,
@@ -364,7 +319,6 @@ const Profile = () => {
           setError("Failed to refresh profile data.");
         }
       } else {
-        console.log("[DEBUG] Failed to update profile:", data.message);
         setError(data.message || "Failed to update profile.");
       }
     } catch (err) {
@@ -429,7 +383,7 @@ const Profile = () => {
         className="mb-4 text-white fw-bold"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
-        <i class="bi bi-person-fill"></i>
+        <i className="bi bi-person-fill"></i>
         My Profile
       </h2>
 
@@ -484,10 +438,6 @@ const Profile = () => {
                   backgroundColor: "#333",
                 }}
                 onError={(e) => {
-                  console.log(
-                    "[DEBUG] Image failed to load:",
-                    profile.profilePicture
-                  );
                   e.target.src = "https://via.placeholder.com/100?text=Error";
                 }}
               />
@@ -759,10 +709,6 @@ const Profile = () => {
                           display: "block",
                         }}
                         onLoad={(e) => {
-                          console.log("[DEBUG] Crop image loaded:", {
-                            naturalWidth: e.currentTarget.naturalWidth,
-                            naturalHeight: e.currentTarget.naturalHeight,
-                          });
                           setImageRef(e.currentTarget);
                         }}
                       />

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
-
-// Define currentDate (12:28 PM IST on May 16, 2025)
-const currentDate = new Date("2025-05-16T12:28:00+05:30");
+import { FaTasks } from "react-icons/fa";
+// Define currentDate (updated to match system time: 01:47 PM IST on May 23, 2025)
+const currentDate = new Date("2025-05-23T13:47:00+05:30");
 const formattedDate = currentDate.toLocaleString("en-IN", {
   weekday: "long",
   year: "numeric",
@@ -33,6 +33,10 @@ const Tasks = ({ users }) => {
   const [updateAssignedUserIds, setUpdateAssignedUserIds] = useState([]);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [selectedTaskDescription, setSelectedTaskDescription] = useState("");
+
+  // State for search
+  const [ongoingSearchQuery, setOngoingSearchQuery] = useState("");
+  const [completedSearchQuery, setCompletedSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -325,12 +329,39 @@ const Tasks = ({ users }) => {
     }
   });
   const completedTasks = tasks.filter((task) => {
-    if (task.status === "completed" || task.status === "completed after deadline") {
+    if (
+      task.status === "completed" ||
+      task.status === "completed after deadline"
+    ) {
       return task;
     }
   });
-  console.log("Incomplete tasks:", incompleteTasks);
-  console.log("Completed tasks:", completedTasks);
+
+  // Apply search filter for Ongoing Tasks
+  const filteredIncompleteTasks = ongoingSearchQuery
+    ? incompleteTasks.filter((task) =>
+        task.assignedTo.some((user) =>
+          user.fullName
+            ? user.fullName
+                .toLowerCase()
+                .includes(ongoingSearchQuery.toLowerCase())
+            : false
+        )
+      )
+    : incompleteTasks;
+
+  // Apply search filter for Completed Tasks
+  const filteredCompletedTasks = completedSearchQuery
+    ? completedTasks.filter((task) =>
+        task.assignedTo.some((user) =>
+          user.fullName
+            ? user.fullName
+                .toLowerCase()
+                .includes(completedSearchQuery.toLowerCase())
+            : false
+        )
+      )
+    : completedTasks;
 
   if (loading || !users) {
     return <div className="text-white">Loading tasks and users...</div>;
@@ -355,11 +386,14 @@ const Tasks = ({ users }) => {
         theme="dark"
       />
       <div className="mb-5">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="text-white">Tasks</h2>
-          <div className="text-muted">
-            <small>{formattedDate}</small>
-          </div>
+        <div>
+          <h2
+            className="mb-4 text-white fw-bold"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
+            <FaTasks className="me-2" />
+            Tasks
+          </h2>
         </div>
 
         <div className="card bg-dark text-white p-4 mb-4">
@@ -498,12 +532,26 @@ const Tasks = ({ users }) => {
         </div>
 
         <div className="card bg-dark text-white p-4 mb-4">
-          <h4 className="card-title text-white mb-3">Task List</h4>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4 className="card-title text-white mb-0">On Going Tasks</h4>
+            <div className="input-group" style={{ width: "250px" }}>
+              <span className="input-group-text bg-dark text-white">
+                <i className="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control bg-dark text-white outline-none shadow-none"
+                placeholder="Search by assigned user..."
+                value={ongoingSearchQuery}
+                onChange={(e) => setOngoingSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
           <div className="table-responsive">
             <table className="table table-dark table-hover mb-0">
               <thead>
                 <tr>
-                  <th style={{ width: "20%" }}>Title</th>
+                  <th style={{ width: "20%", textAlign: "left" }}>Title</th>
                   <th>Description</th>
                   <th>Assigned Users</th>
                   <th>Deadline</th>
@@ -512,13 +560,13 @@ const Tasks = ({ users }) => {
                 </tr>
               </thead>
               <tbody>
-                {incompleteTasks.length > 0 ? (
-                  incompleteTasks.map((task) => {
+                {filteredIncompleteTasks.length > 0 ? (
+                  filteredIncompleteTasks.map((task) => {
                     const assignedUserNames = task.assignedTo
                       .map((user) => user.fullName || "Unknown User")
                       .join(", ");
                     return (
-                      <tr key={task._id}>
+                      <tr style={{ textAlign: "left" }} key={task._id}>
                         <td>{task.title}</td>
                         <td>
                           <button
@@ -550,7 +598,13 @@ const Tasks = ({ users }) => {
                         <td>
                           <span
                             className={`badge ${
-                              task.completed ? "bg-success" : "bg-info"
+                              task.status === "in progress"
+                                ? "bg-info"
+                                : task.status === "testing"
+                                ? "bg-secondary"
+                                : task.status === "resolved"
+                                ? "bg-warning"
+                                : "bg-light"
                             }`}
                           >
                             {task.status}
@@ -586,7 +640,21 @@ const Tasks = ({ users }) => {
         </div>
 
         <div className="card bg-dark text-white p-4">
-          <h4 className="card-title text-white mb-3">Completed Tasks</h4>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4 className="card-title text-white mb-0">Completed Tasks</h4>
+            <div className="input-group" style={{ width: "250px" }}>
+              <span className="input-group-text bg-dark text-white">
+                <i className="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control bg-dark text-white outline-none shadow-none"
+                placeholder="Search by assigned user..."
+                value={completedSearchQuery}
+                onChange={(e) => setCompletedSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
           <div className="table-responsive">
             <table className="table table-dark table-hover mb-0">
               <thead>
@@ -599,8 +667,8 @@ const Tasks = ({ users }) => {
                 </tr>
               </thead>
               <tbody>
-                {completedTasks.length > 0 ? (
-                  completedTasks.map((task) => {
+                {filteredCompletedTasks.length > 0 ? (
+                  filteredCompletedTasks.map((task) => {
                     const assignedUserNames = task.assignedTo
                       .map((user) => user.fullName || "Unknown User")
                       .join(", ");
@@ -637,10 +705,14 @@ const Tasks = ({ users }) => {
                         <td>
                           <span
                             className={`badge ${
-                              task.status === "completed" ? "bg-success" : "bg-danger"
+                              task.status === "completed"
+                                ? "bg-success"
+                                : "bg-danger"
                             }`}
                           >
-                            {task.status === "completed" ? "completed" :"delayed"}
+                            {task.status === "completed"
+                              ? "completed"
+                              : "delayed"}
                           </span>
                         </td>
                       </tr>

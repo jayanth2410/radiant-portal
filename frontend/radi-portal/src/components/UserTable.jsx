@@ -142,7 +142,6 @@ const UserTable = ({
         }
 
         const updatedUsersData = await updatedUsersResponse.json();
-        console.log("Refetched users data:", updatedUsersData);
 
         let newUsers = updatedUsersData;
         if (!Array.isArray(updatedUsersData)) {
@@ -265,7 +264,15 @@ const UserTable = ({
       )}
 
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="text-white">Users</h2>
+        <div>
+          <h2
+            className="mb-4 text-white fw-bold"
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+          >
+            <i class="bi bi-people-fill"> </i>
+            Users
+          </h2>
+        </div>
         <button className="btn btn-success" onClick={handleExcelDownload}>
           Download Excel
         </button>

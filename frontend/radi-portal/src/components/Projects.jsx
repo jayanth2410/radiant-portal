@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { FaProjectDiagram } from "react-icons/fa";
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [newProject, setNewProject] = useState({
@@ -17,10 +17,8 @@ const Projects = () => {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
-  // State to track "Read More" toggle for each project
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
-  // Fetch projects on mount
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -30,10 +28,8 @@ const Projects = () => {
       const response = await axios.get("http://localhost:5000/api/projects", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-      console.log("[DEBUG] Fetched projects:", response.data.projects.length);
       setProjects(response.data.projects || []);
     } catch (error) {
-      console.error("[ERROR] Fetching projects:", error.message);
       toast.error(error.response?.data?.message || "Failed to fetch projects", {
         autoClose: 1000,
         theme: "dark",
@@ -48,7 +44,6 @@ const Projects = () => {
       !newProject.description ||
       !newProject.startDate
     ) {
-      console.log("[DEBUG] Validation failed: Required fields missing");
       toast.error("Title, role, description, and start date are required", {
         autoClose: 1000,
         theme: "dark",
@@ -69,7 +64,6 @@ const Projects = () => {
 
       let response;
       if (editId) {
-        console.log("[DEBUG] Updating project:", { projectId: editId });
         response = await axios.put(
           `http://localhost:5000/api/projects/${editId}`,
           projectData,
@@ -89,7 +83,6 @@ const Projects = () => {
           theme: "dark",
         });
       } else {
-        console.log("[DEBUG] Creating new project");
         response = await axios.post(
           `http://localhost:5000/api/projects`,
           projectData,
@@ -108,7 +101,6 @@ const Projects = () => {
 
       resetForm();
     } catch (error) {
-      console.error("[ERROR] Saving project:", error.message);
       toast.error(error.response?.data?.message || "Failed to save project", {
         autoClose: 1000,
         theme: "dark",
@@ -123,7 +115,6 @@ const Projects = () => {
       `To delete the project, type its name: "${title}"`
     );
     if (confirmation !== title) {
-      console.log("[DEBUG] Deletion canceled: Name mismatch");
       toast.error("Project name did not match. Deletion canceled.", {
         autoClose: 1000,
         theme: "dark",
@@ -132,7 +123,6 @@ const Projects = () => {
     }
 
     try {
-      console.log("[DEBUG] Deleting project:", { projectId });
       await axios.delete(`http://localhost:5000/api/projects/${projectId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -142,7 +132,6 @@ const Projects = () => {
         theme: "dark",
       });
     } catch (error) {
-      console.error("[ERROR] Deleting project:", error.message);
       toast.error(error.response?.data?.message || "Failed to delete project", {
         autoClose: 1000,
         theme: "dark",
@@ -151,7 +140,6 @@ const Projects = () => {
   };
 
   const handleEditProject = (proj) => {
-    console.log("[DEBUG] ureactjs copyediting project:", { projectId: proj._id });
     setNewProject({
       title: proj.title,
       myRole: proj.myRole,
@@ -195,7 +183,6 @@ const Projects = () => {
     setShowModal(false);
   };
 
-  // Toggle "Read More" for a specific project
   const toggleDescription = (projectId) => {
     setExpandedDescriptions((prev) => ({
       ...prev,
@@ -203,7 +190,6 @@ const Projects = () => {
     }));
   };
 
-  // Truncate description if longer than 150 characters
   const truncateDescription = (description, projectId) => {
     const limit = 150;
     if (description.length <= limit || expandedDescriptions[projectId]) {
@@ -214,11 +200,6 @@ const Projects = () => {
         {description.substring(0, limit)}...
         <button
           className="btn btn-link p-0 ms-1 text-info"
-          style={{
-            fontFamily: "'Roboto', sans-serif",
-            fontSize: "0.9rem",
-            textDecoration: "none",
-          }}
           onClick={() => toggleDescription(projectId)}
         >
           Read More <i className="bi bi-chevron-down"></i>
@@ -230,10 +211,10 @@ const Projects = () => {
   return (
     <div className="container">
       <h2
-        className="mb-4 text-white fw-bold"
+        className="mb-4 fw-bold"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
-        <i className="bi bi-briefcase me-2"></i>Projects
+        <FaProjectDiagram style={{ fontSize: "40px" }} /> Projects
       </h2>
       <ToastContainer
         position="top-right"
@@ -248,7 +229,6 @@ const Projects = () => {
         theme="dark"
       />
 
-      {/* Add Project Button */}
       <div className="text-center mb-4">
         <button
           className="btn btn-primary px-4 py-2"
@@ -260,22 +240,15 @@ const Projects = () => {
             borderRadius: "8px",
             transition: "background-color 0.2s ease",
           }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#6b32cc")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#7c3aed")
-          }
           onClick={() => setShowModal(true)}
         >
           <i className="bi bi-plus-circle me-2"></i>Add Project
         </button>
       </div>
 
-      {/* No Projects Placeholder */}
       {projects.length === 0 && (
         <div
-          className="d-flex flex-column align-items-center justify-content-center text-white"
+          className="d-flex flex-column align-items-center justify-content-center"
           style={{
             backgroundColor: "#222",
             borderRadius: "10px",
@@ -300,7 +273,6 @@ const Projects = () => {
         </div>
       )}
 
-      {/* Projects List */}
       <div className="row">
         {projects.map((proj) => (
           <div key={proj._id} className="col-md-6 col-lg-4 mb-4">
@@ -309,7 +281,6 @@ const Projects = () => {
               style={{
                 borderRadius: "10px",
                 border: "1px solid #444",
-                backgroundColor: "#222",
                 transition: "transform 0.2s ease",
               }}
               onMouseEnter={(e) =>
@@ -325,7 +296,7 @@ const Projects = () => {
                   style={{
                     fontFamily: "'Poppins', sans-serif",
                     fontWeight: 700,
-                    fontSize: "2rem",
+                    fontSize: "1.5rem",
                   }}
                 >
                   <i className="bi bi-code-slash me-2"></i>
@@ -336,7 +307,7 @@ const Projects = () => {
                   style={{
                     fontFamily: "'Roboto', sans-serif",
                     fontWeight: 500,
-                    fontSize: "1.1rem",
+                    fontSize: "1rem",
                     color: "#e2e8f0",
                   }}
                 >
@@ -352,7 +323,8 @@ const Projects = () => {
                     color: "#e2e8f0",
                   }}
                 >
-                  <i className="bi bi-calendar3 me-2 text-warning"></i>Date Range
+                  <i className="bi bi-calendar3 me-2 text-warning"></i>Date
+                  Range
                 </h6>
                 <p
                   className="card-text"
@@ -377,7 +349,8 @@ const Projects = () => {
                     color: "#e2e8f0",
                   }}
                 >
-                  <i className="bi bi-file-text me-2 text-warning"></i>Project Details
+                  <i className="bi bi-file-text me-2 text-warning"></i>Project
+                  Details
                 </h6>
                 <p
                   className="card-text"
@@ -392,11 +365,6 @@ const Projects = () => {
                   {expandedDescriptions[proj._id] && (
                     <button
                       className="btn btn-link p-0 ms-1 text-info"
-                      style={{
-                        fontFamily: "'Roboto', sans-serif",
-                        fontSize: "0.9rem",
-                        textDecoration: "none",
-                      }}
                       onClick={() => toggleDescription(proj._id)}
                     >
                       Read Less <i className="bi bi-chevron-up"></i>
@@ -412,16 +380,15 @@ const Projects = () => {
                     color: "#e2e8f0",
                   }}
                 >
-                  <i className="bi bi-tools me-2 text-warning"></i>Technologies Used
+                  <i className="bi bi-tools me-2 text-warning"></i>Technologies
+                  Used
                 </h6>
                 <div className="d-flex flex-wrap gap-2">
                   {proj.techUsed.map((tech, index) => (
                     <span
                       key={index}
-                      className="badge"
+                      className="badge bg-secondary text-white"
                       style={{
-                        backgroundColor: "#444",
-                        color: "#ffffff",
                         fontFamily: "'Roboto', sans-serif",
                         fontSize: "0.85rem",
                         padding: "0.4rem 0.8rem",
@@ -436,41 +403,13 @@ const Projects = () => {
               </div>
               <div className="card-footer d-flex justify-content-end gap-2">
                 <button
-                  className="btn btn-sm px-3 py-1"
-                  style={{
-                    backgroundColor: "#ffc107",
-                    color: "#000",
-                    fontFamily: "'Roboto', sans-serif",
-                    fontSize: "0.85rem",
-                    borderRadius: "8px",
-                    transition: "background-color 0.2s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#e0a800")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#ffc107")
-                  }
+                  className="btn btn-warning btn-sm"
                   onClick={() => handleEditProject(proj)}
                 >
                   <i className="bi bi-pencil me-1"></i> Edit
                 </button>
                 <button
-                  className="btn btn-sm px-3 py-1"
-                  style={{
-                    backgroundColor: "#dc3545",
-                    color: "#fff",
-                    fontFamily: "'Roboto', sans-serif",
-                    fontSize: "0.85rem",
-                    borderRadius: "8px",
-                    transition: "background-color 0.2s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#c82333")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#dc3545")
-                  }
+                  className="btn btn-danger btn-sm"
                   onClick={() => handleDeleteProject(proj._id, proj.title)}
                 >
                   <i className="bi bi-trash me-1"></i> Delete
@@ -481,7 +420,6 @@ const Projects = () => {
         ))}
       </div>
 
-      {/* Modal for Add/Edit Project */}
       {showModal && (
         <div
           className="modal show d-block"
@@ -490,11 +428,7 @@ const Projects = () => {
           <div className="modal-dialog modal-dialog-centered">
             <div
               className="modal-content bg-dark text-white"
-              style={{
-                borderRadius: "12px",
-                border: "1px solid #444",
-                backgroundColor: "#222",
-              }}
+              style={{ borderRadius: "12px", border: "1px solid #444" }}
             >
               <div className="modal-header">
                 <h5
@@ -503,7 +437,6 @@ const Projects = () => {
                     fontFamily: "'Poppins', sans-serif",
                     fontWeight: 700,
                     fontSize: "1.5rem",
-                    color: "#ffffff",
                   }}
                 >
                   <i
@@ -527,7 +460,6 @@ const Projects = () => {
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 500,
                       fontSize: "0.9rem",
-                      color: "#e2e8f0",
                     }}
                   >
                     <i className="bi bi-type me-2"></i>Title
@@ -541,13 +473,6 @@ const Projects = () => {
                       setNewProject({ ...newProject, title: e.target.value })
                     }
                     placeholder="e.g., E-commerce Platform"
-                    style={{
-                      fontFamily: "'Roboto', sans-serif",
-                      fontSize: "0.9rem",
-                      border: "1px solid #444",
-                      borderRadius: "8px",
-                      backgroundColor: "#222",
-                    }}
                   />
                 </div>
                 <div className="mb-3">
@@ -558,7 +483,6 @@ const Projects = () => {
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 500,
                       fontSize: "0.9rem",
-                      color: "#e2e8f0",
                     }}
                   >
                     <i className="bi bi-person-circle me-2"></i>Role
@@ -572,13 +496,6 @@ const Projects = () => {
                       setNewProject({ ...newProject, myRole: e.target.value })
                     }
                     placeholder="e.g., Frontend Developer"
-                    style={{
-                      fontFamily: "'Roboto', sans-serif",
-                      fontSize: "0.9rem",
-                      border: "1px solid #444",
-                      borderRadius: "8px",
-                      backgroundColor: "#222",
-                    }}
                   />
                 </div>
                 <div className="mb-3">
@@ -589,7 +506,6 @@ const Projects = () => {
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 500,
                       fontSize: "0.9rem",
-                      color: "#e2e8f0",
                     }}
                   >
                     <i className="bi bi-file-text me-2"></i>Project Details
@@ -605,13 +521,6 @@ const Projects = () => {
                       })
                     }
                     placeholder="Describe the project"
-                    style={{
-                      fontFamily: "'Roboto', sans-serif",
-                      fontSize: "0.9rem",
-                      border: "1px solid #444",
-                      borderRadius: "8px",
-                      backgroundColor: "#222",
-                    }}
                   />
                 </div>
                 <div className="mb-3">
@@ -622,7 +531,6 @@ const Projects = () => {
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 500,
                       fontSize: "0.9rem",
-                      color: "#e2e8f0",
                     }}
                   >
                     <i className="bi bi-calendar3 me-2"></i>Date Range
@@ -638,13 +546,6 @@ const Projects = () => {
                         startDate: e.target.value,
                       })
                     }
-                    style={{
-                      fontFamily: "'Roboto', sans-serif",
-                      fontSize: "0.9rem",
-                      border: "1px solid #444",
-                      borderRadius: "8px",
-                      backgroundColor: "#222",
-                    }}
                   />
                 </div>
                 <div className="mb-3">
@@ -655,7 +556,6 @@ const Projects = () => {
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 500,
                       fontSize: "0.9rem",
-                      color: "#e2e8f0",
                     }}
                   >
                     <i className="bi bi-calendar-check me-2"></i>End Date
@@ -669,13 +569,6 @@ const Projects = () => {
                     onChange={(e) =>
                       setNewProject({ ...newProject, endDate: e.target.value })
                     }
-                    style={{
-                      fontFamily: "'Roboto', sans-serif",
-                      fontSize: "0.9rem",
-                      border: "1px solid #444",
-                      borderRadius: "8px",
-                      backgroundColor: "#222",
-                    }}
                   />
                 </div>
                 <div className="mb-3">
@@ -686,7 +579,6 @@ const Projects = () => {
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 500,
                       fontSize: "0.9rem",
-                      color: "#e2e8f0",
                     }}
                   >
                     <i className="bi bi-tools me-2"></i>Technologies Used
@@ -699,32 +591,8 @@ const Projects = () => {
                       value={newTech}
                       onChange={(e) => setNewTech(e.target.value)}
                       placeholder="e.g., React"
-                      style={{
-                        fontFamily: "'Roboto', sans-serif",
-                        fontSize: "0.9rem",
-                        border: "1px solid #444",
-                        borderRadius: "8px 0 0 8px",
-                        backgroundColor: "#222",
-                      }}
                     />
-                    <button
-                      className="btn btn-primary"
-                      style={{
-                        backgroundColor: "#7c3aed",
-                        border: "none",
-                        fontFamily: "'Roboto', sans-serif",
-                        fontSize: "0.9rem",
-                        borderRadius: "0 8px 8px 0",
-                        transition: "background-color 0.2s ease",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#6b32cc")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#7c3aed")
-                      }
-                      onClick={handleAddTech}
-                    >
+                    <button className="btn btn-primary" onClick={handleAddTech}>
                       <i className="bi bi-plus-circle me-1"></i>Add
                     </button>
                   </div>
@@ -732,11 +600,8 @@ const Projects = () => {
                     {newProject.techUsed.map((tech, index) => (
                       <span
                         key={index}
-                        className="badge d-flex align-items-center"
+                        className="badge bg-secondary text-white d-flex align-items-center"
                         style={{
-                          backgroundColor: "#444",
-                          color: "#ffffff",
-                          fontFamily: "'Roboto', sans-serif",
                           fontSize: "0.85rem",
                           padding: "0.4rem 0.8rem",
                           borderRadius: "6px",
@@ -746,7 +611,6 @@ const Projects = () => {
                         {tech}
                         <button
                           className="btn-close btn-close-white ms-2"
-                          style={{ fontSize: "0.6rem" }}
                           onClick={() => handleRemoveTech(index)}
                         ></button>
                       </span>
@@ -756,42 +620,14 @@ const Projects = () => {
               </div>
               <div className="modal-footer">
                 <button
-                  className="btn btn-sm px-3 py-1"
-                  style={{
-                    backgroundColor: "#dc3545",
-                    color: "#fff",
-                    fontFamily: "'Roboto', sans-serif",
-                    fontSize: "0.85rem",
-                    borderRadius: "8px",
-                    transition: "background-color 0.2s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#c82333")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#dc3545")
-                  }
+                  className="btn btn-danger btn-sm"
                   onClick={resetForm}
                   disabled={loading}
                 >
                   <i className="bi bi-x-circle me-1"></i>Cancel
                 </button>
                 <button
-                  className="btn btn-sm px-3 py-1"
-                  style={{
-                    backgroundColor: "#28a745",
-                    color: "#fff",
-                    fontFamily: "'Roboto', sans-serif",
-                    fontSize: "0.85rem",
-                    borderRadius: "8px",
-                    transition: "background-color 0.2s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#218838")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#28a745")
-                  }
+                  className="btn btn-success btn-sm"
                   onClick={handleAddOrUpdateProject}
                   disabled={loading}
                 >

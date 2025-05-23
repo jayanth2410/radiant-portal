@@ -40,7 +40,6 @@ const PromoteToAdmin = () => {
 
         const data = await response.json();
         if (response.ok) {
-          console.log("API Response (data.users):", data.users); // Debug the response
           if (!Array.isArray(data.users)) {
             throw new Error(
               "Expected an array of users, but got: " + typeof data.users
@@ -52,7 +51,6 @@ const PromoteToAdmin = () => {
           const filteredUsers = data.users.filter(
             (user) => user.category && user.category.toLowerCase() === "user"
           );
-          console.log("Filtered Users:", filteredUsers); // Debug the filtered result
           setUsers(filteredUsers);
           if (filteredUsers.length === 0 && data.users.length > 0) {
             const errorMessage =

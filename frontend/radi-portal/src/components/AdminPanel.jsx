@@ -258,7 +258,7 @@ const AdminDashboard = () => {
                   backgroundColor: "#333",
                 }}
                 onError={(e) => {
-                  console.log("[DEBUG] AdminDashboard image failed to load");
+
                   e.target.src = defaultImage;
                 }}
               />
