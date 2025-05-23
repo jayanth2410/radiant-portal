@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import { PiCertificate } from "react-icons/pi";
 
 const Certification = () => {
   const [certifications, setCertifications] = useState([]);
@@ -194,7 +195,6 @@ const Certification = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-
       const reader = new FileReader();
       reader.onload = () => {
         setNewCertification({
@@ -238,7 +238,7 @@ const Certification = () => {
         className="mb-4 text-white fw-bold"
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
-        <i class="bi bi-patch-check-fill"></i> Certifications
+        <PiCertificate style={{ fontSize: "40px" }} /> Certifications
       </h2>
 
       {/* Add Certification Button */}
@@ -291,10 +291,6 @@ const Certification = () => {
                     borderTopRightRadius: "10px",
                   }}
                   onError={(e) => {
-                    console.log(
-                      "[DEBUG] Image failed to load:",
-                      cert.certificateImage
-                    );
                     e.target.src =
                       "https://via.placeholder.com/300x200?text=Error";
                   }}

@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { UserContext } from "./UserContext";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { FaTasks } from "react-icons/fa";
 // Define currentDate for consistency
 const currentDate = new Date();
 
@@ -46,7 +46,6 @@ const UserTasks = () => {
         clearTimeout(timeoutId);
 
         const data = await response.json();
-        console.log("User data from /api/auth/me:", data);
         if (response.ok) {
           const userTasks = Array.isArray(data.tasks) ? data.tasks : [];
           setTasks(userTasks);
@@ -88,7 +87,6 @@ const UserTasks = () => {
         clearTimeout(timeoutId);
 
         const data = await response.json();
-        console.log("Users data from /api/users:", data);
         if (response.ok) {
           setUsers(Array.isArray(data.users) ? data.users : []);
         } else {
@@ -179,7 +177,6 @@ const UserTasks = () => {
       );
 
       const data = await response.json();
-      console.log("[DEBUG] Task status update response:", data);
 
       if (response.ok) {
         if (confirmAction === "mark-completed") {
@@ -248,7 +245,6 @@ const UserTasks = () => {
       );
 
       const data = await response.json();
-      console.log("[DEBUG] Undo complete response:", data);
 
       if (response.ok) {
         toast.success(data.message || "Task status updated successfully", {
@@ -402,8 +398,15 @@ const UserTasks = () => {
         pauseOnHover={false}
         theme="dark"
       />
-      <h2 className="text-white mb-4">Tasks</h2>
-
+      <div>
+        <h2
+          className="mb-4 text-white fw-bold"
+          style={{ fontFamily: "'Poppins', sans-serif" }}
+        >
+          <FaTasks className="me-2" />
+          Tasks
+        </h2>
+      </div>
       {/* Task Creation Form */}
       <div className="card bg-dark text-white p-4 mb-4">
         <h4 className="text-white mb-3">Create New Task</h4>
@@ -465,7 +468,7 @@ const UserTasks = () => {
                 className="table table-dark table-hover mb-0"
                 style={{ tableLayout: "fixed", width: "100%" }}
               >
-                <thead style={{textAlign: "center"}}>
+                <thead style={{ textAlign: "center" }}>
                   <tr>
                     <th style={{ width: "30%", textAlign: "left" }}>Title</th>
                     <th style={{ width: "15%" }}>Description</th>
@@ -483,7 +486,7 @@ const UserTasks = () => {
                     <th style={{ width: "20%" }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody style={{textAlign: "center"}}>
+                <tbody style={{ textAlign: "center" }}>
                   {filteredTasks.map((task, index) => {
                     const assignedUserNames = Array.isArray(task.assignedTo)
                       ? task.assignedTo
@@ -643,19 +646,19 @@ const UserTasks = () => {
         <h4 className="card-title text-white mb-3">Completed Tasks</h4>
         <div className="table-responsive">
           <table className="table table-dark table-hover mb-0">
-            <thead style={{textAlign: "center"}}>
+            <thead style={{ textAlign: "center" }}>
               <tr>
                 <th style={{ width: "20%", textAlign: "left" }}>Title</th>
                 <th>Description</th>
-                <th>Assigned to</th>
+                <th>Assigned by</th>
                 <th>Deadline</th>
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody style={{textAlign: "center"}}>
+            <tbody style={{ textAlign: "center" }}>
               {completedTasks.length > 0 ? (
                 completedTasks.map((task) => {
-                  const assignedUserNames = Array.isArray(task.assignedTo)
+                  const assignedUserNames = Array.isArray(task.assignedBy)
                     ? task.assignedTo
                         .map((userId) => {
                           const user = users.find((u) => u._id === userId);
@@ -665,7 +668,9 @@ const UserTasks = () => {
                     : user.fullName;
                   return (
                     <tr key={task._id}>
-                      <td style={{textAlign: "left"}}>{task.title || "Untitled"}</td>
+                      <td style={{ textAlign: "left" }}>
+                        {task.title || "Untitled"}
+                      </td>
                       <td>
                         <button
                           className="btn btn-outline-info btn-sm"
@@ -680,21 +685,16 @@ const UserTasks = () => {
                           View Description
                         </button>
                       </td>
-                      <td>
-                        <span
-                          style={{
-                            color:
-                              assignedUserNames !== "No users assigned"
-                                ? "inherit"
-                                : "#888",
-                            fontStyle:
-                              assignedUserNames !== "No users assigned"
-                                ? "normal"
-                                : "italic",
-                          }}
-                        >
-                          {assignedUserNames}
-                        </span>
+                      <td
+                        style={{
+                          width: "10%",
+                          whiteSpace: "normal",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {task.assignedBy?._id === user?._id
+                          ? "You"
+                          : task.assignedBy?.fullName || "Unknown"}
                       </td>
                       <td>
                         {task.deadline

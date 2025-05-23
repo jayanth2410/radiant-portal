@@ -7,14 +7,14 @@ import "react-toastify/dist/ReactToastify.css";
 import {
   FaHome,
   FaUser,
-  FaCertificate,
+  FaRegThumbsDown,
   FaProjectDiagram,
-  FaSignOutAlt,
+  FaGithubSquare ,
   FaClipboardCheck,
   FaSun,
   FaCheckCircle,
   FaTasks,
-  FaAngleRight,
+  FaCode ,
 } from "react-icons/fa";
 
 // Define currentDate (use current time for consistency)
@@ -23,10 +23,12 @@ const currentDate = new Date();
 const HomePage = () => {
   const { user, refetchUser } = useContext(UserContext);
   const navigate = useNavigate();
-
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [selectedTaskDescription, setSelectedTaskDescription] = useState("");
-  const [pendingProjects, setPendingProjects] = useState(0);
+  const [pendingTasks, setpendingTasks] = useState(0);
+  const [pendingProject, setpendingProject] = useState(0);
+  const [totalProject, setTotalProject] = useState(0);
+  const [projectCompletion, setProjectCompletion] = useState(0);
   const [overdueTasks, setOverdueTasks] = useState(0);
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [totalTasks, setTotalTasks] = useState(0);
@@ -44,7 +46,7 @@ const HomePage = () => {
   // Combined effect for user data and tasks
   useEffect(() => {
     if (!user) {
-      setPendingProjects(0);
+      setpendingTasks(0);
       setOverdueTasks(0);
       setCompletionPercentage(0);
       setTotalTasks(0);
@@ -78,7 +80,6 @@ const HomePage = () => {
 
       setIsFetchingUsers(true);
       setFetchUserError(null);
-      console.log("[DEBUG] Fetching users, attempt:", retryCount + 1);
 
       try {
         const response = await fetch("http://localhost:5000/api/users/", {
@@ -87,10 +88,8 @@ const HomePage = () => {
           },
         });
 
-        console.log("[DEBUG] /api/users response status:", response.status);
 
         if (response.status === 401) {
-          console.log("[DEBUG] Unauthorized, redirecting to login");
           localStorage.removeItem("token");
           toast.error("Session expired. Please log in again.", {
             autoClose: 2000,
@@ -100,7 +99,6 @@ const HomePage = () => {
         }
 
         const data = await response.json();
-        console.log("[DEBUG] /api/users response data:", data);
 
         if (response.ok && Array.isArray(data.users)) {
           const userDetails = {};
@@ -109,7 +107,6 @@ const HomePage = () => {
           });
           if (isMounted) {
             setUserMap(userDetails);
-            console.log("[DEBUG] Users fetched successfully:", userDetails);
           }
         } else {
           throw new Error(data.message || "Failed to fetch users");
@@ -121,7 +118,6 @@ const HomePage = () => {
           error
         );
         if (retryCount < maxRetries) {
-          console.log("[DEBUG] Retrying fetch users...");
           setTimeout(() => fetchUsers(retryCount + 1, maxRetries), 1000);
         } else {
           if (isMounted) {
@@ -147,7 +143,6 @@ const HomePage = () => {
     const processTasks = () => {
       if (!isMounted) return;
 
-      console.log("[DEBUG] Processing tasks for user:", user._id);
       const taskField = user.category === "admin" ? "tasksCreated" : "tasks";
       let tasks = user[taskField] || [];
 
@@ -165,8 +160,20 @@ const HomePage = () => {
       const pending = tasks.filter(
         (task) => task.status !== "completed"
       ).length;
-      setPendingProjects(pending);
+      setpendingTasks(pending);
 
+      const pendingProj = user.projects.filter((proj) => {
+        if (proj.endDate === null) return proj;
+      }).length;
+
+      setpendingProject(pendingProj);
+
+      const totalProj = user.projects.length;
+      setTotalProject(totalProj);
+
+      const projcompletion = Math.round(((totalProj-pendingProj)/totalProj)*100);
+
+      setProjectCompletion(projcompletion)
       const overdue = tasks.filter((task) => {
         const deadline = new Date(task.deadline);
         return task.status !== "completed" && deadline < currentDate;
@@ -202,8 +209,6 @@ const HomePage = () => {
         initialStatuses[task._id] = task.status || "in progress";
       });
       setTaskStatuses(initialStatuses);
-
-      console.log("[DEBUG] Tasks processed, recentTasks:", recent);
     };
 
     // Execute fetch and task processing
@@ -218,7 +223,6 @@ const HomePage = () => {
 
   const handleEsc = useCallback((event) => {
     if (event.key === "Escape") {
-      console.log("[DEBUG] Escape key pressed, closing modals");
       closeModals();
     }
   }, []);
@@ -231,7 +235,6 @@ const HomePage = () => {
   }, [handleEsc]);
 
   const closeModals = useCallback(() => {
-    console.log("[DEBUG] Closing modals");
     setShowDescriptionModal(false);
     setSelectedTaskDescription("");
     setShowConfirmModal(false);
@@ -241,13 +244,11 @@ const HomePage = () => {
   }, []);
 
   const handleViewDescription = (description) => {
-    console.log("[DEBUG] Opening description modal");
     setSelectedTaskDescription(description);
     setShowDescriptionModal(true);
   };
 
   const initiateAction = (taskId, action, status = null) => {
-    console.log("[DEBUG] Initiating action:", action, "for task:", taskId);
     setTaskToAction(taskId);
     setConfirmAction(action);
     setSelectedStatus(status);
@@ -256,7 +257,6 @@ const HomePage = () => {
 
   const handleAction = async () => {
     if (!taskToAction || !confirmAction) {
-      console.log("[DEBUG] No task or action to perform");
       return;
     }
 
@@ -271,7 +271,6 @@ const HomePage = () => {
       status = selectedStatus;
       completed = status === "resolved";
     } else {
-      console.log("[DEBUG] Invalid action:", confirmAction);
       return;
     }
 
@@ -290,7 +289,6 @@ const HomePage = () => {
       );
 
       const data = await response.json();
-      console.log("[DEBUG] Task status update response:", data);
 
       if (response.ok) {
         if (confirmAction === "mark-completed") {
@@ -348,7 +346,6 @@ const HomePage = () => {
       );
 
       const data = await response.json();
-      console.log("[DEBUG] Undo complete response:", data);
 
       if (response.ok) {
         toast.success(data.message || "Task status updated successfully", {
@@ -400,13 +397,15 @@ const HomePage = () => {
         </div>
       </div>
       <div className="row mb-4">
+        
+
         <div className="col-md-3">
           <div className="card bg-dark text-white mb-3">
             <div className="card-body">
               <div className="d-flex justify-content-between">
                 <div>
-                  <h5>Active Projects</h5>
-                  <h3>{pendingProjects}</h3>
+                  <h5>Active Tasks</h5>
+                  <h3>{pendingTasks}</h3>
                   <small className="text-success">⬆ 4 from last month</small>
                 </div>
                 <FaClipboardCheck size={30} />
@@ -423,7 +422,7 @@ const HomePage = () => {
                   <h3>{overdueTasks}</h3>
                   <small className="text-danger">Past deadline</small>
                 </div>
-                <FaSun size={30} />
+                <FaRegThumbsDown  size={30} />
               </div>
             </div>
           </div>
@@ -456,6 +455,53 @@ const HomePage = () => {
             </div>
           </div>
         </div>
+
+        <div className="col-md-3">
+          <div className="card bg-dark text-white mb-3">
+            <div className="card-body">
+              <div className="d-flex justify-content-between">
+                <div>
+                  <h5>Active Projects</h5>
+                  <h3>{pendingProject}</h3>
+                  <small className="text-success">⬆ 4 from last month</small>
+                </div>
+                <FaProjectDiagram size={30} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-3">
+          <div className="card bg-dark text-white mb-3">
+            <div className="card-body">
+              <div className="d-flex justify-content-between">
+                <div>
+                  <h5>Total Projects</h5>
+                  <h3>{totalProject}</h3>
+                  <small className="text-success">⬆ 4 from last month</small>
+                </div>
+                <FaCode  size={30} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-3">
+          <div className="card bg-dark text-white mb-3">
+            <div className="card-body">
+              <div className="d-flex justify-content-between">
+                <div>
+                  <h5>Project Completion</h5>
+                  <h3>{projectCompletion}%</h3>
+                  <small className="text-success">⬆ 4 from last month</small>
+                </div>
+                <FaGithubSquare  size={30} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+
       </div>
       <div className="card bg-dark text-white" style={{ width: "100%" }}>
         <div className="card-body">
@@ -479,12 +525,12 @@ const HomePage = () => {
               >
                 <thead style={{ textAlign: "center" }}>
                   <tr>
-                    <th style={{ width: "30%" , textAlign: "left"}}>Title</th>
+                    <th style={{ width: "30%", textAlign: "left" }}>Title</th>
                     <th style={{ width: "15%" }}>Description</th>
                     <th style={{ width: "10%" }}>Assigned By</th>
                     {user && user.category === "admin" && (
                       <th style={{ width: "20%" }}>Assigned To</th>
-                    )} 
+                    )}
                     <th
                       style={{
                         width:
@@ -496,7 +542,7 @@ const HomePage = () => {
                     <th style={{ width: "20%" }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody style={{textAlign: "center"}}>
+                <tbody style={{ textAlign: "center" }}>
                   {recentTasks.map((task, index) => (
                     <tr key={`${task._id}-${index}`}>
                       <td
@@ -670,9 +716,7 @@ const HomePage = () => {
             role="document"
             onClick={(e) => {
               e.stopPropagation();
-              console.log(
-                "[DEBUG] Clicked inside description modal, preventing close"
-              );
+
             }}
           >
             <div className="modal-content bg-dark text-white">
@@ -682,9 +726,7 @@ const HomePage = () => {
                   type="button"
                   className="btn-close btn-close-white"
                   onClick={() => {
-                    console.log(
-                      "[DEBUG] Description modal close button clicked"
-                    );
+
                     closeModals();
                   }}
                   aria-label="Close"
@@ -713,9 +755,6 @@ const HomePage = () => {
             role="document"
             onClick={(e) => {
               e.stopPropagation();
-              console.log(
-                "[DEBUG] Clicked inside confirm modal, preventing close"
-              );
             }}
           >
             <div className="modal-content bg-dark text-white">
@@ -725,7 +764,6 @@ const HomePage = () => {
                   type="button"
                   className="btn-close btn-close-white"
                   onClick={() => {
-                    console.log("[DEBUG] Confirm modal close button clicked");
                     closeModals();
                   }}
                   aria-label="Close"
@@ -745,7 +783,6 @@ const HomePage = () => {
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => {
-                    console.log("[DEBUG] Confirm modal 'No' button clicked");
                     closeModals();
                   }}
                 >

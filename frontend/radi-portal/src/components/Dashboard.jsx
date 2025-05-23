@@ -53,7 +53,6 @@ const Dashboard = () => {
         clearTimeout(timeoutId);
 
         const data = await response.json();
-        console.log("User data from /api/auth/me:", data);
         if (response.ok) {
           setProfile({
             profilePicture: data.profilePicture || defaultImage,
@@ -204,7 +203,6 @@ const Dashboard = () => {
                   backgroundColor: "#333",
                 }}
                 onError={(e) => {
-                  console.log("[DEBUG] Sidebar image failed to load");
                   e.target.src = defaultImage;
                 }}
               />
