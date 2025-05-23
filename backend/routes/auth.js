@@ -204,22 +204,23 @@ router.put(
         });
         user.profilePicture = req.file.buffer;
       }
-
       // Update fields
+
       const updates = req.body;
       console.log("[DEBUG] Update fields received:", updates);
 
       user.fullName = updates.fullName;
-      user.dateOfBirth = new Date(updates.dateOfBirth);
+      if (updates.dateOfBirth == null) {
+        user.dateOfBirth = null;
+      } else {
+        user.dateOfBirth = new Date(updates.dateOfBirth);
+      }
       user.phone = updates.phone;
       user.address = updates.address;
       user.yearsOfExperience = updates.yearsOfExperience;
-      user.role = updates.role;
       user.bloodGroup = updates.bloodGroup;
-
       user.emergencyContact = updates.emergencyContact;
       user.personalEmail = updates.personalEmail;
-      user.id = updates.id;
 
       await user.save();
       console.log("[DEBUG] User updated successfully:", {

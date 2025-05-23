@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   id: { type: String, default: "not-set" },
   dateOfBirth: { type: Date, default: null },
-  phone: { type: String, default: "not-set" },
+  phone: { type: String, default: "not-sett" },
   role: { type: String, default: "not-set" },
   address: { type: String, default: "not-set" },
   yearsOfExperience: { type: Number, default: 0 },

@@ -38,11 +38,10 @@ const Profile = () => {
 
   // Define field order and display labels
   const fieldOrder = [
-    { key: "id", label: "ID", type: "text" },
-    { key: "role", label: "Role", type: "text" },
+    { key: "personalEmail", label: "Personal Email", type: "email" },
     { key: "dob", label: "Date of Birth", type: "date" },
     { key: "phone", label: "Phone", type: "text" },
-    { key: "personalEmail", label: "Personal Email", type: "email" },
+
     { key: "emergencyContact", label: "Emergency Contact", type: "text" },
     { key: "bloodGroup", label: "Blood Group", type: "text" },
     { key: "address", label: "Address", type: "text" },
@@ -62,16 +61,16 @@ const Profile = () => {
         if (response.ok) {
           setProfile({
             profilePicture: data.profilePicture || defaultProfile,
-            name: data.fullName,
-            id: data.id || "not-set",
-            role: data.role || "not-set",
-            dob: formatDate(data.dateOfBirth),
-            phone: data.phone || "not-set",
-            personalEmail: data.personalEmail || "not-set",
-            emergencyContact: data.emergencyContact || "not-set",
-            bloodGroup: data.bloodGroup || "not-set",
-            address: data.address || "not-set",
-            yearsOfExperience: data.yearsOfExperience || "0",
+            name: data.fullName || "",
+            id: data.id || "",
+            role: data.role || "",
+            dob: data.dateOfBirth ? formatDate(data.dateOfBirth) : "",
+            phone: data.phone || "",
+            personalEmail: data.personalEmail || "",
+            emergencyContact: data.emergencyContact || "",
+            bloodGroup: data.bloodGroup || "",
+            address: data.address || "",
+            yearsOfExperience: data.yearsOfExperience || "",
           });
         } else {
           setError(data.message || "Failed to load profile data.");
@@ -208,16 +207,18 @@ const Profile = () => {
         if (updatedProfileResponse.ok) {
           setProfile({
             profilePicture: updatedProfileData.profilePicture || defaultProfile,
-            name: updatedProfileData.fullName,
-            id: updatedProfileData.id || "not-set",
-            role: updatedProfileData.role || "not-set",
-            dob: formatDate(updatedProfileData.dateOfBirth),
-            phone: updatedProfileData.phone || "not-set",
-            personalEmail: updatedProfileData.personalEmail || "not-set",
-            emergencyContact: updatedProfileData.emergencyContact || "not-set",
-            bloodGroup: updatedProfileData.bloodGroup || "not-set",
-            address: updatedProfileData.address || "not-set",
-            yearsOfExperience: updatedProfileData.yearsOfExperience || "0",
+            name: updatedProfileData.fullName || "",
+            id: updatedProfileData.id || "",
+            role: updatedProfileData.role || "",
+            dob: updatedProfileData.dateOfBirth
+              ? formatDate(updatedProfileData.dateOfBirth)
+              : "",
+            phone: updatedProfileData.phone || "",
+            personalEmail: updatedProfileData.personalEmail || "",
+            emergencyContact: updatedProfileData.emergencyContact || "",
+            bloodGroup: updatedProfileData.bloodGroup || "",
+            address: updatedProfileData.address || "",
+            yearsOfExperience: updatedProfileData.yearsOfExperience || "",
           });
         } else {
           setError("Failed to refresh profile data.");
@@ -233,44 +234,63 @@ const Profile = () => {
 
   const handleUpdateProfile = async () => {
     const mobileRegex = /^[6-9]\d{9}$/;
-    const isValidMobile = mobileRegex.test(profile.phone);
-    if (!isValidMobile) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Only validate phone if not empty
+    if (profile.phone && !mobileRegex.test(profile.phone)) {
       toast.error(
         "Invalid mobile number format. Must start with 6-9 and be 10 digits long.",
-        {
-          autoClose: 3000,
-        }
+        { autoClose: 3000 }
       );
       return;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isValidEmail = emailRegex.test(profile.personalEmail);
-    if (!isValidEmail) {
-      toast.error("Invalid email format.", {
-        autoClose: 3000,
-      });
+
+    // Only validate email if not empty
+    if (profile.personalEmail && !emailRegex.test(profile.personalEmail)) {
+      toast.error("Invalid email format.", { autoClose: 3000 });
       return;
     }
+
+    let dobToSend = null;
+    if (profile.dob) {
+      dobToSend = new Date(profile.dob).toISOString();
+    }
+
+    const updates = {
+      fullName: profile.name,
+      phone: profile.phone,
+      dateOfBirth: dobToSend, // Will be null if empty
+      personalEmail: profile.personalEmail,
+      emergencyContact: profile.emergencyContact,
+      bloodGroup: profile.bloodGroup,
+      address: profile.address,
+      yearsOfExperience: profile.yearsOfExperience,
+    };
+
+    // Only add dateOfBirth if valid
+    if (profile.dob) {
+      const date = new Date(profile.dob);
+      if (!isNaN(date.getTime())) {
+        updates.dateOfBirth = date.toISOString();
+      }
+    }
+
+    // Only add role if not empty or not 'not-set'
+    if (profile.role && profile.role !== "not-set") {
+      updates.role = profile.role;
+    }
+
+    // Only add id if not empty or not 'not-set'
+    if (profile.id && profile.id !== "not-set") {
+      updates.id = profile.id;
+    }
+
+    // Remove undefined fields (including dateOfBirth if not set)
+    Object.keys(updates).forEach(
+      (key) => updates[key] === undefined && delete updates[key]
+    );
 
     try {
-      const updates = {
-        fullName: profile.name,
-        dateOfBirth: profile.dob ? new Date(profile.dob).toISOString() : null,
-        phone: profile.phone,
-        personalEmail: profile.personalEmail,
-        emergencyContact: profile.emergencyContact,
-        bloodGroup: profile.bloodGroup,
-        address: profile.address,
-        yearsOfExperience: profile.yearsOfExperience,
-        role: profile.role,
-        id: profile.id,
-      };
-
-      // Remove null or unchanged fields
-      Object.keys(updates).forEach(
-        (key) => updates[key] == null && delete updates[key]
-      );
-
       const response = await fetch(
         "http://localhost:5000/api/auth/update-profile",
         {
@@ -284,7 +304,6 @@ const Profile = () => {
       );
 
       const data = await response.json();
-
 
       if (response.ok) {
         toast.success("Profile updated successfully!", {
@@ -304,16 +323,18 @@ const Profile = () => {
         if (updatedProfileResponse.ok) {
           setProfile({
             profilePicture: updatedProfileData.profilePicture || defaultProfile,
-            name: updatedProfileData.fullName,
-            id: updatedProfileData.id || "not-set",
-            role: updatedProfileData.role || "not-set",
-            dob: formatDate(updatedProfileData.dateOfBirth),
-            phone: updatedProfileData.phone || "not-set",
-            personalEmail: updatedProfileData.personalEmail || "not-set",
-            emergencyContact: updatedProfileData.emergencyContact || "not-set",
-            bloodGroup: updatedProfileData.bloodGroup || "not-set",
-            address: updatedProfileData.address || "not-set",
-            yearsOfExperience: updatedProfileData.yearsOfExperience || "0",
+            name: updatedProfileData.fullName || "",
+            id: updatedProfileData.id || "",
+            role: updatedProfileData.role || "",
+            dob: updatedProfileData.dateOfBirth
+              ? formatDate(updatedProfileData.dateOfBirth)
+              : "",
+            phone: updatedProfileData.phone || "",
+            personalEmail: updatedProfileData.personalEmail || "",
+            emergencyContact: updatedProfileData.emergencyContact || "",
+            bloodGroup: updatedProfileData.bloodGroup || "",
+            address: updatedProfileData.address || "",
+            yearsOfExperience: updatedProfileData.yearsOfExperience || "",
           });
         } else {
           setError("Failed to refresh profile data.");
@@ -340,16 +361,16 @@ const Profile = () => {
         if (response.ok) {
           setProfile({
             profilePicture: data.profilePicture || defaultProfile,
-            name: data.fullName,
-            id: data.id || "not-set",
-            role: data.role || "not-set",
-            dob: formatDate(data.dateOfBirth),
-            phone: data.phone || "not-set",
-            personalEmail: data.personalEmail || "not-set",
-            emergencyContact: data.emergencyContact || "not-set",
-            bloodGroup: data.bloodGroup || "not-set",
-            address: data.address || "not-set",
-            yearsOfExperience: data.yearsOfExperience || "0",
+            name: data.fullName || "",
+            id: data.id || "",
+            role: data.role || "",
+            dob: data.dateOfBirth ? formatDate(data.dateOfBirth) : "",
+            phone: data.phone || "",
+            personalEmail: data.personalEmail || "",
+            emergencyContact: data.emergencyContact || "",
+            bloodGroup: data.bloodGroup || "",
+            address: data.address || "",
+            yearsOfExperience: data.yearsOfExperience || "",
           });
         }
       } catch (err) {
@@ -460,7 +481,7 @@ const Profile = () => {
           </div>
           <div className="d-flex flex-column">
             <h5
-              className="mb-2 text-white"
+              className="mb-1 text-white"
               style={{
                 fontFamily: "'Poppins', sans-serif",
                 fontWeight: 600,
@@ -469,6 +490,18 @@ const Profile = () => {
             >
               {profile.name || "User"}
             </h5>
+            <div
+              className="mb-1"
+              style={{
+                fontFamily: "'Roboto', sans-serif",
+                fontSize: "0.95rem",
+                color: "#bdbdbd",
+                lineHeight: 1.2,
+              }}
+            >
+              <div>{profile.id && <span>ID: {profile.id}</span>}</div>
+              <div>{profile.role && <span>Role: {profile.role}</span>}</div>
+            </div>
             <div className="d-flex gap-2">
               <label
                 className="btn btn-sm px-3 py-1"
@@ -572,23 +605,35 @@ const Profile = () => {
                   >
                     {label}
                   </label>
-                  <input
-                    type={type}
-                    id={key}
-                    name={key}
-                    className="form-control bg-dark text-white"
-                    value={profile[key]}
-                    onChange={handleInputChange}
-                    style={{
-                      fontSize: "0.9rem",
-                      padding: "0.5rem",
-                      border: "1px solid #7c3aed",
-                      borderRadius: "8px",
-                      transition: "border-color 0.2s ease",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "#db2777")}
-                    onBlur={(e) => (e.target.style.borderColor = "#7c3aed")}
-                  />
+                  {key === "dob" ? ( // Special handling for date of birth
+                    <input
+                      type="date"
+                      id="dob"
+                      name="dob"
+                      className="form-control bg-dark text-white"
+                      value={profile.dob || ""}
+                      onChange={handleInputChange}
+                      placeholder="dd-mm-yyyy"
+                    />
+                  ) : (
+                    <input
+                      type={type}
+                      id={key}
+                      name={key}
+                      className="form-control bg-dark text-white"
+                      value={profile[key]}
+                      onChange={handleInputChange}
+                      style={{
+                        fontSize: "0.9rem",
+                        padding: "0.5rem",
+                        border: "1px solid #7c3aed",
+                        borderRadius: "8px",
+                        transition: "border-color 0.2s ease",
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = "#db2777")}
+                      onBlur={(e) => (e.target.style.borderColor = "#7c3aed")}
+                    />
+                  )}
                 </div>
               ))}
               <div className="col-12 mt-4">
